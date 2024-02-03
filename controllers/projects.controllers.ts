@@ -124,6 +124,28 @@ const createStage = async (req: Request, res: Response): Promise<Response | void
     }
 }
 
+const createTask = async (req: Request, res: Response): Promise<Response | void> => {
+    try {
+        const taskData = req.body;
+
+        const newTask = await new Task(taskData).save();
+
+        const task = await Task.findOne({taskId: newTask.taskId}).select({__v: 0, _id: 0});
+        
+        await Stage.findOneAndUpdate({stageId: taskData.currentStage.stageId}, {
+            $push: {
+                tasks: task
+            }
+        });
+
+        res.status(200).send(task);
+
+    } catch (error) {
+        console.error(error);
+        res.status(400).send({error: 'Failed creating stage'});
+    }
+}
+
 const updateStages = async (stages: IStage[]): Promise<void> => {
     try {
         for (const stage of stages) {
@@ -197,11 +219,27 @@ const deleteTasks = async (tasks: ITask[]): Promise<void> => {
     }
 }
 
+const deleteTask = async (req: Request, res: Response): Promise<Response | void> => {
+    try {
+        const {taskId} = req.params;
+        console.log(taskId)
+        
+        await Task.findOneAndDelete({taskId});
+
+        return res.status(200).send('Successfully deleted task');
+    } catch (error) {
+        console.error(error);
+        res.status(400).send('Failed deleting task');
+    }
+}
+
 export {
     getAllProjects,
     createProject,
     getProjectById,
     updateProject,
     deleteProject,
-    createStage
+    createStage,
+    deleteTask,
+    createTask
 }

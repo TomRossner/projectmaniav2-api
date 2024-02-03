@@ -14,6 +14,7 @@ interface ITaskDoc extends Document {
     isDone: boolean;
     createdAt: Date;
     priority: TPriority;
+    dueDate: Date;
 }
 
 const taskSchema = new Schema({
@@ -38,6 +39,16 @@ const taskSchema = new Schema({
         default: 'low'
     },
     imgSrc: {
+        type: String
+    },
+    dueDate: {
+        type: Date
+    },
+    currentStage: {
+        stageId: String,
+        title: String
+    },
+    description: {
         type: String
     }
 }, {collection: 'tasks'});
