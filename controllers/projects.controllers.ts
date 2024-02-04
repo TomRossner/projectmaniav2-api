@@ -64,7 +64,6 @@ const getProjectById = async (req: Request, res: Response): Promise<Response | v
 const updateProject = async (req: Request, res: Response): Promise<Response | void> => {
     try {
         const {projectId, stages} = req.body;
-        console.log(projectId)
         
         if (stages.length) await updateStages(stages);
 
