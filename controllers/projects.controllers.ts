@@ -3,6 +3,7 @@ import { IProjectDoc, Project } from "../models/project.model.js";
 import { Stage } from "../models/stage.model.js";
 import { Task } from "../models/task.model.js";
 import { IStage, ITask } from "../utils/interfaces.js";
+import { compress } from "../utils/sharp.js";
 
 const getAllProjects = async (req: Request, res: Response): Promise<Response | void> => {
     try {
@@ -63,6 +64,7 @@ const getProjectById = async (req: Request, res: Response): Promise<Response | v
 const updateProject = async (req: Request, res: Response): Promise<Response | void> => {
     try {
         const {projectId, stages} = req.body;
+        console.log(projectId)
         
         if (stages.length) await updateStages(stages);
 
@@ -175,7 +177,8 @@ const updateTasks = async (tasks: ITask[]): Promise<void> => {
                     title,
                     priority,
                     dueDate,
-                    description
+                    description,
+                    imgSrc: task.imgSrc ? await compress(task.imgSrc) : undefined
                 }
             });
         }
@@ -222,7 +225,6 @@ const deleteTasks = async (tasks: ITask[]): Promise<void> => {
 const deleteTask = async (req: Request, res: Response): Promise<Response | void> => {
     try {
         const {taskId} = req.params;
-        console.log(taskId)
         
         await Task.findOneAndDelete({taskId});
 
