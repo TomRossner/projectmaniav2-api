@@ -46,15 +46,13 @@ const createProject = async (req: Request, res: Response): Promise<Response | vo
 
 const getProjectById = async (req: Request, res: Response): Promise<Response | void> => {
     try {
-        const {projectId} = req.body;
+        const {projectId} = req.params;
 
         const project = await Project.findOne({projectId});
 
         if (project) {
             return res.status(200).send(project);
         }
-
-        res.status(400).send({error: 'Failed fetching project'});
     } catch (error) {
         console.error(error);
         res.status(400).send({error: 'Failed fetching project'});

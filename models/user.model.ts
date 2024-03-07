@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
 import { DEFAULT_BG } from "../utils/constants.js";
+import { IProjectDoc, Project } from "./project.model.js";
 
 config();
 
@@ -18,6 +19,7 @@ interface IUserDoc extends Document {
     isOnline?: boolean;
     userId: string;
     imgSrc?: string;
+    mostRecentProject?: Partial<IProjectDoc>;
     
     // Add the generateAuthToken method to the interface
     generateAuthToken(): string;
@@ -57,6 +59,10 @@ const userSchema = new Schema({
     imgSrc: {
         type: String,
         default: DEFAULT_BG
+    },
+    mostRecentProject: {
+        type: Object,
+        default: null
     }
 }, {collection: 'users'});
 
@@ -70,6 +76,7 @@ userSchema.method('generateAuthToken', function() {
             isOnline: this.isOnline,
             imgSrc: this.imgSrc,
             createdAt: this.createdAt,
+            mostRecentProject: this.mostRecentProject
         }, process.env.JWT_SECRET as string);
     
         return token;

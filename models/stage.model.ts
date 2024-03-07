@@ -1,7 +1,6 @@
 import { config } from "dotenv";
 import { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
-import { DEFAULT_BG } from "../utils/constants.js";
 import { ITask } from "../utils/interfaces.js";
 import { taskSchema } from "./task.model.js";
 

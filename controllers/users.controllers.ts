@@ -76,10 +76,16 @@ const getUserByEmail = async (req: Request, res: Response): Promise<Response | v
 
 const updateUser = async (req: Request, res: Response): Promise<Response | void> => {
     try {
-        const newData = req.body;
+        const updatedUserData = req.body;
+        console.log(updatedUserData)
         const {userId} = req.params;
 
-        await User.findOneAndUpdate({userId}, newData);
+        // await User.findOneAndUpdate({userId}, updatedUserData);
+        await User.updateOne({userId}, {
+            $set: {
+                ...updatedUserData
+            }
+        });
 
         res.status(200).send('Successfully updated user');
     } catch (error) {
