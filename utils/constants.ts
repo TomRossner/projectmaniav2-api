@@ -17,11 +17,14 @@ const DEFAULT_BG: string = 'https://i.pngimg.me/thumb/f/720/36e5ddc52b194bd6ad71
 
 const REQUEST_TIMEOUT: number = 10000; // in ms
 
+const JSON_PAYLOAD_LIMIT: string = '5mb';
+
 export {
     PORT,
     ROUTES,
     MONGODB_URI,
     SALT_ROUNDS,
     DEFAULT_BG,
-    REQUEST_TIMEOUT
+    REQUEST_TIMEOUT,
+    JSON_PAYLOAD_LIMIT
 }

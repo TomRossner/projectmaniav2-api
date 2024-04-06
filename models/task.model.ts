@@ -1,7 +1,7 @@
 import { config } from "dotenv";
 import { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
-import { TPriority } from "../utils/types.js";
+import { Priority } from "../utils/types.js";
 
 config();
 
@@ -13,8 +13,10 @@ interface ITaskDoc extends Document {
     imgSrc?: string;
     isDone: boolean;
     createdAt: Date;
-    priority: TPriority;
+    priority: Priority;
     dueDate: Date;
+    externalLinks?: string[];
+    labels: string[];
 }
 
 const taskSchema = new Schema({
@@ -50,6 +52,14 @@ const taskSchema = new Schema({
     },
     description: {
         type: String
+    },
+    externalLinks: {
+        type: [Object],
+        default: []
+    },
+    labels: {
+        type: [String],
+        default: []
     }
 }, {collection: 'tasks'});
 

@@ -1,4 +1,4 @@
-import { TPriority } from "./types.js";
+import { Label, Priority } from "./types.js";
 
 interface IBaseUser {
     email: string;
@@ -30,9 +30,11 @@ interface ITask {
     dueDate: Date;
     description?: string;
     imgSrc?: string;
-    priority: TPriority;
+    priority: Priority;
     isDone: boolean;
     title: string;
+    externalLinks?: string[];
+    labels: Label[];
 }
 
 export {

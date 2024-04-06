@@ -1,5 +1,8 @@
-type TPriority = 'low' | 'medium' | 'high';
+type Priority = 'low' | 'medium' | 'high';
+
+type Label = 'bug' | 'completed';
 
 export {
-    TPriority
+    Priority,
+    Label
 }

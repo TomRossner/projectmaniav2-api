@@ -3,7 +3,7 @@ import { IProjectDoc, Project } from "../models/project.model.js";
 import { Stage } from "../models/stage.model.js";
 import { Task } from "../models/task.model.js";
 import { IStage, ITask } from "../utils/interfaces.js";
-import { compress } from "../utils/sharp.js";
+import { processImg } from "../utils/sharp.js";
 
 const getAllProjects = async (req: Request, res: Response): Promise<Response | void> => {
     try {
@@ -30,7 +30,6 @@ const getAllProjects = async (req: Request, res: Response): Promise<Response | v
 
 const createProject = async (req: Request, res: Response): Promise<Response | void> => {
     try {
-        console.log(req.body)
         const newProject = await new Project({...req.body}).save();
 
         const project = await Project.findById(newProject._id).select({__v: 0, _id: 0});
@@ -167,7 +166,15 @@ const updateStages = async (stages: IStage[]): Promise<void> => {
 const updateTasks = async (tasks: ITask[]): Promise<void> => {
     try {
         for (const task of tasks) {
-            const {taskId, title, priority, dueDate, description} = task;
+            const {
+                taskId,
+                title,
+                priority,
+                dueDate,
+                description,
+                externalLinks,
+                labels
+            } = task;
 
             await Task.updateOne({taskId}, {
                 $set: {
@@ -175,7 +182,11 @@ const updateTasks = async (tasks: ITask[]): Promise<void> => {
                     priority,
                     dueDate,
                     description,
-                    imgSrc: task.imgSrc ? await compress(task.imgSrc) : undefined
+                    imgSrc: task.imgSrc
+                        ? await processImg(task.imgSrc)
+                        : null,
+                    externalLinks,
+                    labels
                 }
             });
         }
@@ -210,9 +221,7 @@ const deleteTasks = async (tasks: ITask[]): Promise<void> => {
         for (const task of tasks) {
             const {taskId} = task;
 
-            for (const task of tasks) {
-                await Task.findOneAndDelete({taskId});    
-            }
+            await Task.findOneAndDelete({taskId});
         }
     } catch (error) {
         console.error(error);

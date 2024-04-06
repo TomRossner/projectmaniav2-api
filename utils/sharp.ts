@@ -1,44 +1,50 @@
 import sharp from "sharp";
 
-// Compresses PNG/JPEG images
-async function compress(imgDataURL: string): Promise<string> {
+type PNG = "png";
+type JPEG = "jpeg";
 
-    // Handle PNG compression
-    if (imgDataURL.includes('data:image/png')) {
+type Format = PNG | JPEG;
+
+const isJPEG = (imgData: string): imgData is JPEG => {
+    return imgData.includes('data:image/jpeg');
+}
+
+const isPNG = (imgData: string): imgData is PNG => {
+    return imgData.includes('data:image/png');
+}
+
+async function compressTo(format: Format, imgData: Buffer): Promise<Buffer> {
+    return await sharp(imgData)
+                            .toFormat(format)
+                            .resize({width: 150})
+                            .png({quality: 100})
+                            .toBuffer();
+}
+
+// Process PNG/JPEG images
+async function processImg(imgDataURL: string): Promise<string> {
+    if (imgDataURL) {
 
         const imgData = imgDataURL.split(';base64,')[1];
         const bufferedImgData = Buffer.from(imgData, 'base64');
 
-        const compressedPNG = await sharp(bufferedImgData)
-            .toFormat('png')
-            .resize({width: 150})
-            .png({quality: 100})
-            .toBuffer();
+        if (isJPEG(imgDataURL)) {
+            const compressed = await compressTo("jpeg", bufferedImgData);
 
-        const compressedPNG_DataURL = `data:image/png;base64,${compressedPNG.toString('base64')}`;
+            return `data:image/jpeg;base64,${compressed.toString('base64')}`;
+        }
 
-        return compressedPNG_DataURL;
+        if (isPNG(imgDataURL)) {
+            const compressed = await compressTo("png", bufferedImgData);
 
-    // Handle JPEG compression
-    } else if (imgDataURL.includes('data:image/jpeg')) {
+            return `data:image/png;base64,${compressed.toString('base64')}`;
+        }
 
-        const imgData = imgDataURL.split(';base64,')[1];
-        const bufferedImgData = Buffer.from(imgData, 'base64');
-        
-        const compressedJPEG = await sharp(bufferedImgData)
-            .toFormat('jpeg')
-            .resize({width: 150})
-            .jpeg({quality: 100})
-            .toBuffer();
+        throw new Error('Invalid image format');
 
-        const compressedJPEG_DataURL = `data:image/jpeg;base64,${compressedJPEG.toString('base64')}`;
-
-        return compressedJPEG_DataURL;
-        
-    // Throw error if the image is not of type JPEG or PNG
-    } else throw new Error("Could not compress image");
+    } else throw new Error('Image data URL not provided');
 }
 
 export {
-    compress
+    processImg
 }

@@ -17,7 +17,7 @@ const PATTERN_TYPES = {
 
 
 // Check regex pattern
-const checkPattern = (type: string, input: string) => {
+const checkPattern = (type: string, input: string): false | RegExpMatchArray | null => {
     
     const {EMAIL, PASSWORD, NAME} = REGEX_PATTERNS;
 

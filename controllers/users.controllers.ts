@@ -77,17 +77,22 @@ const getUserByEmail = async (req: Request, res: Response): Promise<Response | v
 const updateUser = async (req: Request, res: Response): Promise<Response | void> => {
     try {
         const updatedUserData = req.body;
-        console.log(updatedUserData)
         const {userId} = req.params;
 
-        // await User.findOneAndUpdate({userId}, updatedUserData);
         await User.updateOne({userId}, {
             $set: {
                 ...updatedUserData
             }
         });
 
-        res.status(200).send('Successfully updated user');
+        const user = await User.findOne({userId});
+
+        if (user) {
+            const token = user.generateAuthToken();
+
+            return res.status(200).send({token});
+        }
+
     } catch (error) {
         console.error(error);
         res.status(400).send({error: 'Failed updating user'});
