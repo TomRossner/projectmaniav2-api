@@ -18,11 +18,19 @@ config();
 
 const app = express();
 
-const IO_PORT: number = 3002
-const io = new Server({cors: {origin: "http://localhost:3001"}});
+const io = new Server({
+    cors: {
+        origin: `${process.env.DEV_API_URL}:${PORT}`
+    }
+});
 
-app.use(json({limit: JSON_PAYLOAD_LIMIT}));
-app.use(urlencoded({extended: true, limit: JSON_PAYLOAD_LIMIT}));
+app.use(json({
+    limit: JSON_PAYLOAD_LIMIT
+}));
+app.use(urlencoded({
+    extended: true,
+    limit: JSON_PAYLOAD_LIMIT
+}));
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
@@ -38,18 +46,26 @@ app.use(USERS_ROUTE, UsersRouter);
 app.use(PROJECTS_ROUTE, VERIFY_AUTH, ProjectsRouter);
 
 const listenToEvents = (ioServer: Server) => {
-    ioServer
-        .on("connection", (socket) => {
-            console.log(`🔌 ${socket.id} is now connected`);
+    const onConnection = (socket: Socket) => {
+        const sid = socket.id;
 
-            socket.on("disconnect", () => {
-                console.log(`❌ ${socket.id} has disconnected`);
-            })
-            .on("online", ({userId}: {userId: string} | Partial<IUser>) => {
-                console.log(userId);
-                socket.broadcast.emit("online", {userId});
-            })
-        })
+        console.log(`🔌 ${sid} is now connected`);
+
+        const onDisconnect = () => {
+            console.log(`❌ ${sid} has disconnected`);
+        }
+
+        const onOnline = (userId: string) => {
+            console.log("User id: ", userId);
+            socket.broadcast.emit("online", {userId});
+        }
+
+        socket
+            .on("disconnect", onDisconnect)
+            .on("online", (data) => onOnline(data.userId))
+    }
+
+    ioServer.on("connection", onConnection);
 }
 
 const init = async (): Promise<void> => {
