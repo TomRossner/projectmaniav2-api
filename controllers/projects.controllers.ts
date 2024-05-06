@@ -173,7 +173,7 @@ const updateTasks = async (tasks: ITask[]): Promise<void> => {
                 dueDate,
                 description,
                 externalLinks,
-                labels
+                tags
             } = task;
 
             await Task.updateOne({taskId}, {
@@ -186,8 +186,8 @@ const updateTasks = async (tasks: ITask[]): Promise<void> => {
                         ? await processImg(task.imgSrc)
                         : null,
                     externalLinks,
-                    labels
-                }
+                    tags
+                },
             });
         }
     } catch (error) {

@@ -1,4 +1,4 @@
-import { Label, Priority } from "./types.js";
+import { Priority, Tag } from "./types.js";
 
 interface IBaseUser {
     email: string;
@@ -34,7 +34,7 @@ interface ITask {
     isDone: boolean;
     title: string;
     externalLinks?: string[];
-    labels: Label[];
+    tags: Tag[];
 }
 
 export {

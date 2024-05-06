@@ -16,7 +16,7 @@ interface ITaskDoc extends Document {
     priority: Priority;
     dueDate: Date;
     externalLinks?: string[];
-    labels: string[];
+    tags: string[];
 }
 
 const taskSchema = new Schema({
@@ -57,7 +57,7 @@ const taskSchema = new Schema({
         type: [Object],
         default: []
     },
-    labels: {
+    tags: {
         type: [String],
         default: []
     }

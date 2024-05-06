@@ -1,8 +1,8 @@
 type Priority = 'low' | 'medium' | 'high';
 
-type Label = 'bug' | 'completed';
+type Tag = 'bug' | 'ui' | 'feature' | 'hotfix';
 
 export {
     Priority,
-    Label
+    Tag
 }
