@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsc && nodemon .",
-    "start": "tsc && node ."
+    "dev": "node -v && npm -v && tsc && nodemon .",
+    "start": "node -v && npm -v && tsc && node ."
   },
   "author": "",
   "license": "ISC",

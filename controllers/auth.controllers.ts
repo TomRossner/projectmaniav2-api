@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { comparePasswords, hash } from "../utils/bcrypt.js";
 import { INewUser } from "../utils/interfaces.js";
-import { User } from "../models/user.model.js";
+import { IUserDoc, User } from "../models/user.model.js";
 import { validateUserData } from "../utils/regexp.js";
 
 const login = async (req: Request, res: Response): Promise<Response | void> => {
@@ -34,7 +34,12 @@ const login = async (req: Request, res: Response): Promise<Response | void> => {
 
 const signUp = async (req: Request, res: Response): Promise<Response | void> => {
     try {
-        const {firstName, lastName, email, password} = req.body;
+        const {
+            firstName,
+            lastName,
+            email,
+            password
+        } = req.body;
 
         const isAlreadyRegistered = await User.findOne({email});
 
@@ -45,7 +50,7 @@ const signUp = async (req: Request, res: Response): Promise<Response | void> => 
             lastName,
             email,
             password
-        }
+        };
 
         const isValid: boolean = validateUserData(newUserData);
 
@@ -70,7 +75,7 @@ const googleSignIn = async (req: Request, res: Response): Promise<Response | voi
     }
 }
 
-const createNewUser = async (userData: INewUser): Promise<any> => {
+const createNewUser = async (userData: INewUser): Promise<IUserDoc> => {
     return await new User({
         ...userData,
         password: await hash(userData.password)

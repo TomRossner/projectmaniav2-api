@@ -2,10 +2,12 @@ import { config } from "dotenv";
 import { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
 import { Priority } from "../utils/types.js";
+import { IStage } from "../utils/interfaces.js";
+import { DEFAULT_PRIORITY } from "../utils/constants.js";
 
 config();
 
-// Define an interface for the Stage document
+// Define an interface for the Task document
 interface ITaskDoc extends Document {
     title: string;
     description?: string;
@@ -17,6 +19,7 @@ interface ITaskDoc extends Document {
     dueDate: Date;
     externalLinks?: string[];
     tags: string[];
+    currentStage: Pick<IStage, "stageId" | "title">;
 }
 
 const taskSchema = new Schema({
@@ -38,9 +41,9 @@ const taskSchema = new Schema({
     },
     priority: {
         type: String,
-        default: 'low'
+        default: DEFAULT_PRIORITY
     },
-    imgSrc: {
+    thumbnailSrc: {
         type: String
     },
     dueDate: {

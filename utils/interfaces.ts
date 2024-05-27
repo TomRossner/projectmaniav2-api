@@ -1,3 +1,4 @@
+import { IProjectDoc } from "../models/project.model.js";
 import { Priority, Tag } from "./types.js";
 
 interface IBaseUser {
@@ -17,6 +18,7 @@ interface IUser extends INewUser {
     imgSrc: string;
     userId: string;
     socketId: string;
+    mostRecentProject?: Pick<IProjectDoc, "projectId" | "title"> | null;
 }
 
 interface IStage {
@@ -29,12 +31,13 @@ interface ITask {
     taskId: string;
     dueDate: Date;
     description?: string;
-    imgSrc?: string;
+    thumbnailSrc?: string;
     priority: Priority;
     isDone: boolean;
     title: string;
     externalLinks?: string[];
     tags: Tag[];
+    currentStage: Pick<IStage, "stageId" | "title">,
 }
 
 export {

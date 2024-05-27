@@ -4,18 +4,20 @@ import { Stage } from "../models/stage.model.js";
 import { Task } from "../models/task.model.js";
 import { IStage, ITask } from "../utils/interfaces.js";
 import { processImg } from "../utils/sharp.js";
+import { ExcludedFieldKeys, SelectedFields } from "../utils/types.js";
+import { DOCUMENT_EXCLUDED_FIELDS } from "../utils/constants.js";
 
 const getAllProjects = async (req: Request, res: Response): Promise<Response | void> => {
     try {
         const {userId} = req.query;
 
-        const projects = await Project.find({
+        const projects: SelectedFields<IProjectDoc, ExcludedFieldKeys>[] = await Project.find({
             team: {
                 $elemMatch: {
                     userId
                 }
             }
-        }).select({__v: 0, _id: 0});
+        }).select(DOCUMENT_EXCLUDED_FIELDS);
 
         if (projects.length) {
             return res.status(200).send(projects);
@@ -32,7 +34,9 @@ const createProject = async (req: Request, res: Response): Promise<Response | vo
     try {
         const newProject = await new Project({...req.body}).save();
 
-        const project = await Project.findById(newProject._id).select({__v: 0, _id: 0});
+        const project: SelectedFields<IProjectDoc, ExcludedFieldKeys> = await Project
+            .findById(newProject._id)
+            .select(DOCUMENT_EXCLUDED_FIELDS);
         
         if (project) {
             return res.status(200).send(project);
@@ -47,7 +51,9 @@ const getProjectById = async (req: Request, res: Response): Promise<Response | v
     try {
         const {projectId} = req.params;
 
-        const project = await Project.findOne({projectId});
+        const project: SelectedFields<IProjectDoc, ExcludedFieldKeys> = await Project
+            .findOne({projectId})
+            .select(DOCUMENT_EXCLUDED_FIELDS);
 
         if (project) {
             return res.status(200).send(project);
@@ -81,14 +87,11 @@ const deleteProject = async (req: Request, res: Response): Promise<Response | vo
     try {
         const {projectId} = req.params;
         
-        const {stages} = await Project
+        const project: SelectedFields<IProjectDoc, ExcludedFieldKeys> = await Project
             .findOne({projectId})
-            .select({
-                __v: 0,
-                _id: 0,
-            }) as Partial<IProjectDoc>;
+            .select(DOCUMENT_EXCLUDED_FIELDS)
         
-        if (stages?.length) await deleteStages(stages as IStage[]);
+        if (project.stages?.length) await deleteStages(project.stages as IStage[]);
 
         await Project.findOneAndDelete({projectId});
 
@@ -106,7 +109,9 @@ const createStage = async (req: Request, res: Response): Promise<Response | void
 
         const newStage = await new Stage(stageData).save();
 
-        const stage = await Stage.findOne({stageId: newStage.stageId}).select({__v: 0, _id: 0});
+        const stage: SelectedFields<IStage, ExcludedFieldKeys> = await Stage
+            .findOne({stageId: newStage.stageId})
+            .select(DOCUMENT_EXCLUDED_FIELDS);
         
         await Project.findOneAndUpdate({projectId}, {
             $push: {
@@ -128,7 +133,9 @@ const createTask = async (req: Request, res: Response): Promise<Response | void>
 
         const newTask = await new Task(taskData).save();
 
-        const task = await Task.findOne({taskId: newTask.taskId}).select({__v: 0, _id: 0});
+        const task = await Task
+            .findOne({taskId: newTask.taskId})
+            .select({__v: 0, _id: 0}) as Omit<ITask, "_id" | "__v">;
         
         await Stage.findOneAndUpdate({stageId: taskData.currentStage.stageId}, {
             $push: {
@@ -182,8 +189,8 @@ const updateTasks = async (tasks: ITask[]): Promise<void> => {
                     priority,
                     dueDate,
                     description,
-                    imgSrc: task.imgSrc
-                        ? await processImg(task.imgSrc)
+                    thumbnailSrc: task.thumbnailSrc
+                        ? await processImg(task.thumbnailSrc)
                         : null,
                     externalLinks,
                     tags
@@ -197,17 +204,17 @@ const updateTasks = async (tasks: ITask[]): Promise<void> => {
 
 const deleteStages = async (stages: IStage[]): Promise<void> => {
     try {
-        for (const stage of stages) {
-            const {stageId} = stage;
+        for (const s of stages) {
+            const {stageId} = s;
 
-            const {tasks} = Stage
-                .find({stageId})
+            const stage = await Stage
+                .findOne({stageId})
                 .select({
                     __v: 0,
                     _id: 0,
-                }) as Partial<IStage>;
+                }) as Omit<IStage, "_id" | "__v">;
 
-            if (tasks?.length) await deleteTasks(tasks as ITask[]);
+            if (stage.tasks?.length) await deleteTasks(stage.tasks as ITask[]);
 
             await Stage.findOneAndDelete({stageId});
         }

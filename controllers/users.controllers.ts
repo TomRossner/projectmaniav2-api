@@ -1,19 +1,14 @@
 import { Request, Response } from "express"
 import { comparePasswords, hash } from "../utils/bcrypt.js";
 import { IUserDoc, User } from "../models/user.model.js";
+import { ExcludedFieldKeys, ExcludedFields, SelectedFields } from "../utils/types.js";
+import { USER_EXCLUDED_FIELDS } from "../utils/constants.js";
 
 const getAllUsers = async (req: Request, res: Response): Promise<Response | void> => {
     try {
-        const users: IUserDoc[] = await User
+        const users: SelectedFields<IUserDoc, ExcludedFieldKeys>[] = await User
             .find()
-            .select({
-                password: 0,
-                __v: 0,
-                _id: 0,
-                socketId: 0,
-                userId: 0
-            }
-        );
+            .select<SelectedFields<IUserDoc, ExcludedFieldKeys>>(USER_EXCLUDED_FIELDS);
         
         res.status(200).send(users);
     } catch (error) {
@@ -26,18 +21,9 @@ const getUserById = async (req: Request, res: Response): Promise<Response | void
     try {
         const {userId} = req.params;
 
-        const user: IUserDoc = await User
-            .findOne({
-                userId
-            })
-            .select({
-                password: 0,
-                __v: 0,
-                _id: 0,
-                socketId: 0,
-                userId: 0
-            }
-        );
+        const user: SelectedFields<IUserDoc, ExcludedFieldKeys> | null = await User
+            .findOne({ userId })
+            .select<SelectedFields<IUserDoc, ExcludedFieldKeys>>(USER_EXCLUDED_FIELDS);
 
         if (!user) return res.status(400).send({error: 'User not found'});
         
@@ -51,19 +37,10 @@ const getUserById = async (req: Request, res: Response): Promise<Response | void
 const getUserByEmail = async (req: Request, res: Response): Promise<Response | void> => {
     try {
         const {email} = req.params;
-        
-        const user: IUserDoc = await User
-            .findOne({
-                email
-            })
-            .select({
-                password: 0,
-                __v: 0,
-                _id: 0,
-                socketId: 0,
-                userId: 0
-            }
-        );
+
+        const user: SelectedFields<IUserDoc, ExcludedFieldKeys> | null = await User
+            .findOne({ email })
+            .select<SelectedFields<IUserDoc, ExcludedFieldKeys>>(USER_EXCLUDED_FIELDS);
 
         if (!user) return res.status(400).send({error: 'User not found'});
         

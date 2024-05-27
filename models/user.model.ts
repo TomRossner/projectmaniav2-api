@@ -19,7 +19,7 @@ interface IUserDoc extends Document {
     isOnline?: boolean;
     userId: string;
     imgSrc?: string;
-    mostRecentProject?: Partial<IProjectDoc>;
+    mostRecentProject?: Pick<IProjectDoc, "projectId" | "title">;
     
     // Add the generateAuthToken method to the interface
     generateAuthToken(): string;

@@ -6,13 +6,24 @@
 
 # Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
 
-ARG NODE_VERSION=20.9.0
+# ARG NODE_VERSION=20.9.0
 
-FROM node:${NODE_VERSION}-alpine
-
+# FROM node:${NODE_VERSION}-alpine
+FROM ubuntu:latest
 
 # Use production node environment by default.
 ENV NODE_ENV production
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update
+RUN apt-get install -y curl software-properties-common
+
+# Install Node.js (You can specify a version if needed, here it's the latest LTS version)
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+RUN apt-get install -y nodejs
+
+# Verify Node.js and npm installation
+RUN node -v && npm -v
 
 
 WORKDIR /usr/src/project-mania-v2-api

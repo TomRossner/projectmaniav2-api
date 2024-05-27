@@ -3,7 +3,6 @@ import { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
 import { IStage } from "../utils/interfaces.js";
 import { stageSchema } from "./stage.model.js";
-import { userSchema } from "./user.model.js";
 
 config();
 
