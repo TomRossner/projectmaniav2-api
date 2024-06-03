@@ -135,7 +135,7 @@ const createTask = async (req: Request, res: Response): Promise<Response | void>
 
         const task = await Task
             .findOne({taskId: newTask.taskId})
-            .select({__v: 0, _id: 0}) as Omit<ITask, "_id" | "__v">;
+            .select(DOCUMENT_EXCLUDED_FIELDS);
         
         await Stage.findOneAndUpdate({stageId: taskData.currentStage.stageId}, {
             $push: {
@@ -209,10 +209,7 @@ const deleteStages = async (stages: IStage[]): Promise<void> => {
 
             const stage = await Stage
                 .findOne({stageId})
-                .select({
-                    __v: 0,
-                    _id: 0,
-                }) as Omit<IStage, "_id" | "__v">;
+                .select(DOCUMENT_EXCLUDED_FIELDS) as IStage;
 
             if (stage.tasks?.length) await deleteTasks(stage.tasks as ITask[]);
 
