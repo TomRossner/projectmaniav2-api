@@ -2,7 +2,8 @@ import { Request, Response } from "express"
 import { comparePasswords, hash } from "../utils/bcrypt.js";
 import { IUserDoc, User } from "../models/user.model.js";
 import { ExcludedFieldKeys, ExcludedFields, SelectedFields } from "../utils/types.js";
-import { USER_EXCLUDED_FIELDS } from "../utils/constants.js";
+import { DOCUMENT_EXCLUDED_FIELDS, USER_EXCLUDED_FIELDS } from "../utils/constants.js";
+import { IUser } from "../utils/interfaces.js";
 
 const getAllUsers = async (req: Request, res: Response): Promise<Response | void> => {
     try {
@@ -120,11 +121,34 @@ const updateUserPassword = async (req: Request, res: Response): Promise<Response
     }
 }
 
+const getUsersByQuery = async (req: Request, res: Response): Promise<Response | void> => {
+    try {
+        const {query} = req.body;
+
+        const regex: RegExp = new RegExp(query, 'i');
+
+        const users: SelectedFields<IUser, ExcludedFieldKeys>[] = await User
+            .find({$or: [
+                { firstName: {$regex: regex} },
+                { lastName: {$regex: regex} },
+            ]})
+            .select(DOCUMENT_EXCLUDED_FIELDS);
+
+        if (!!users.length) {
+            return res.status(200).send(users);
+        } else return res.status(200).send([]);
+    } catch (error) {
+        console.error(error);
+        res.status(400).send({error: 'Failed getting users'});
+    }
+}
+
 export {
     getAllUsers,
     getUserById,
     getUserByEmail,
     updateUser,
     deleteUser,
-    updateUserPassword
+    updateUserPassword,
+    getUsersByQuery
 }

@@ -11,8 +11,6 @@ import ProjectsRouter from "./routes/projects.routes.js";
 import { VERIFY_AUTH } from "./middlewares/auth.middleware.js";
 import { Server, Socket } from "socket.io";
 import _ from "lodash";
-import { IUser } from "./utils/interfaces.js";
-
 
 config();
 
