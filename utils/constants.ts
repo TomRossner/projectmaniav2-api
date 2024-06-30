@@ -8,6 +8,7 @@ const ROUTES = {
     AUTH_ROUTE: '/auth',
     USERS_ROUTE: '/users',
     PROJECTS_ROUTE: '/projects',
+    NOTIFICATIONS_ROUTE: '/notifications',
 }
 
 const MONGODB_URI: string = process.env.MONGODB_URI as string;

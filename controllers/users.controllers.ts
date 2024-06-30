@@ -1,7 +1,7 @@
 import { Request, Response } from "express"
 import { comparePasswords, hash } from "../utils/bcrypt.js";
 import { IUserDoc, User } from "../models/user.model.js";
-import { ExcludedFieldKeys, ExcludedFields, SelectedFields } from "../utils/types.js";
+import { ExcludedFieldKeys, SelectedFields } from "../utils/types.js";
 import { DOCUMENT_EXCLUDED_FIELDS, USER_EXCLUDED_FIELDS } from "../utils/constants.js";
 import { IUser } from "../utils/interfaces.js";
 
@@ -150,5 +150,5 @@ export {
     updateUser,
     deleteUser,
     updateUserPassword,
-    getUsersByQuery
+    getUsersByQuery,
 }

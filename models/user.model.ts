@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
 import { DEFAULT_BG } from "../utils/constants.js";
-import { IProjectDoc, Project } from "./project.model.js";
+import { IProjectDoc } from "./project.model.js";
 
 config();
 
@@ -20,6 +20,7 @@ interface IUserDoc extends Document {
     userId: string;
     imgSrc?: string;
     mostRecentProject?: Pick<IProjectDoc, "projectId" | "title">;
+    notifications: string[];
     
     // Add the generateAuthToken method to the interface
     generateAuthToken(): string;
@@ -42,7 +43,10 @@ const userSchema = new Schema({
         type: String,
         require: true,
     },
-    socketId: String,
+    socketId: {
+        type: String,
+        default: "",
+    },
     lastSeen: Date,
     createdAt: {
         type: Date,
@@ -63,6 +67,10 @@ const userSchema = new Schema({
     mostRecentProject: {
         type: Object,
         default: null
+    },
+    notifications: {
+        type: [String],
+        default: [],
     }
 }, {collection: 'users'});
 
@@ -76,7 +84,8 @@ userSchema.method('generateAuthToken', function() {
             isOnline: this.isOnline,
             imgSrc: this.imgSrc,
             createdAt: this.createdAt,
-            mostRecentProject: this.mostRecentProject
+            mostRecentProject: this.mostRecentProject,
+            notifications: this.notifications
         }, process.env.JWT_SECRET as string);
     
         return token;

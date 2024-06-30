@@ -1,5 +1,5 @@
 import { IProjectDoc } from "../models/project.model.js";
-import { Priority, Tag } from "./types.js";
+import { Sender, Subject, Priority, Tag } from "./types.js";
 
 interface IBaseUser {
     email: string;
@@ -40,10 +40,24 @@ interface ITask {
     currentStage: Pick<IStage, "stageId" | "title">,
 }
 
+interface IInvitationData {
+    projectData: Pick<IProjectDoc, "projectId" | "title">;
+    sender: Sender;
+    subject: Subject;
+}
+
+interface IInvitation extends IInvitationData {
+    isPending: boolean;
+    createdAt: Date;
+    id: string;
+}
+
 export {
     IBaseUser,
     INewUser,
     IUser,
     ITask,
-    IStage
+    IStage,
+    IInvitation,
+    IInvitationData,
 }
