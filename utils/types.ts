@@ -1,7 +1,7 @@
 // Types
 
-import { IProjectDoc } from "../models/project.model.js";
-import { IUser } from "./interfaces.js";
+import { ProjectDocument } from "../models/project.model.js";
+import { ITask, IUser } from "./interfaces.js";
 
 type Priority = 'low' | 'medium' | 'high';
 
@@ -21,9 +21,9 @@ type ExcludedFields = {
 
 type Sender = Pick<IUser, "userId" | "firstName" | "lastName">;
 
-type Subject = Pick<IUser, "userId" | "firstName" | "lastName">;
+type Recipient = Pick<IUser, "userId" | "firstName" | "lastName">;
 
-type NotificationType = 'invitation' | 'message' | 'friendRequest' | 'joinedProject';
+type NotificationType = 'invitation' | 'message' | 'friendRequest' | 'assignment' | 'default';
 
 type Message = {
     from: Pick<IUser, "userId" | "firstName" | "lastName">;
@@ -34,20 +34,9 @@ type Message = {
     id: string;
 }
 
-interface INotification extends NewNotificationData {
-    id: string;
-    createdAt: Date;
-    isSeen: boolean;
-}
+type NotificationData = Pick<ProjectDocument, "projectId" | "title"> | Pick<Message, "id" | "from" | "createdAt" | "isRead">;
 
-interface NewNotificationData {
-    type: NotificationType;
-    sender: Sender;
-    subject: Subject;
-    data: NotificationData;
-}
-
-type NotificationData = Pick<IProjectDoc, "projectId" | "title"> | Pick<Message, "id" | "from" | "createdAt" | "isRead">;
+type SubTask = Pick<ITask, "isDone" | "title"> & {subtaskId: string};
 
 export {
     Priority,
@@ -58,9 +47,9 @@ export {
     ExcludedFields,
     ExcludedFieldValue,
     Sender,
-    Subject,
-    NewNotificationData,
-    INotification,
+    Recipient,
     Message,
     NotificationData,
+    NotificationType,
+    SubTask,
 }

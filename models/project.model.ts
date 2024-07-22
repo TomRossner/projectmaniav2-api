@@ -1,51 +1,63 @@
 import { config } from "dotenv";
-import { Schema, model } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
 import { IStage } from "../utils/interfaces.js";
 import { stageSchema } from "./stage.model.js";
 
 config();
 
-// Define an interface for the Project document
-interface IProjectDoc extends Document {
+// Define an interface for the ProjectModel document
+interface ProjectDocument extends mongoose.Document {
     title: string;
     projectId: string;
     stages: IStage[];
     createdAt: Date;
+    updatedAt: Date;
     subtitle?: string;
+    createdBy: string;
 }
 
 const projectSchema = new Schema({
     title: {
         type: String,
-        require: true,
+        required: true,
     },
     subtitle: {
         type: String,
     },
     stages: {
         type: [stageSchema],
-        require: true,
+        required: true,
         default: []
     },
     projectId: {
         type: String,
-        default: uuid
+        default: uuid,
     },
     createdAt: {
         type: Date,
-        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
     },
     team: {
         type: [Object],
         default: [],
-        require: true
+        required: true
     },
-}, {collection: 'projects'});
+    createdBy: {
+        type: String,
+        default: "",
+        required: true,
+    },
+}, {
+    collection: 'projects',
+    timestamps: true,
+});
 
-const Project = model<IProjectDoc>('Project', projectSchema);
+const ProjectModel = model<ProjectDocument>('ProjectModel', projectSchema);
 
 export {
-    Project,
-    IProjectDoc
+    ProjectModel,
+    ProjectDocument
 }

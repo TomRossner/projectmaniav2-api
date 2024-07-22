@@ -1,10 +1,10 @@
 import { v4 as uuid } from "uuid";
-import { Project } from "../models/project.model.js";
-import { Stage } from "../models/stage.model.js";
-import { Task } from "../models/task.model.js";
-import { User } from "../models/user.model.js";
-import { IInvitation, IInvitationData } from "./interfaces.js";
-import { Model, INotification, NewNotificationData } from "./types.js";
+import { ProjectModel } from "../models/project.model.js";
+import { StageModel } from "../models/stage.model.js";
+import { TaskModel } from "../models/task.model.js";
+import UserModel from "../models/user.model.js";
+import { IInvitation, IInvitationData, INotification, NewNotificationData } from "./interfaces.js";
+import { Model } from "./types.js";
 import { DOCUMENT_EXCLUDED_FIELDS } from "./constants.js";
 import { Notification } from "../models/notification.model.js";
 
@@ -13,13 +13,13 @@ const updateFieldName = async (model: Model, currName: string, newName: string) 
     try {
         switch (model) {
             case "task":
-                return await Task.updateMany({}, {$rename: renameField});
+                return await TaskModel.updateMany({}, {$rename: renameField});
             case "stage":
-                return await Stage.updateMany({}, {$rename: renameField});
+                return await StageModel.updateMany({}, {$rename: renameField});
             case "project":
-                return await Project.updateMany({}, {$rename: renameField});
+                return await ProjectModel.updateMany({}, {$rename: renameField});
             case "user":
-                return await User.updateMany({}, {$rename: renameField});
+                return await UserModel.updateMany({}, {$rename: renameField});
             default:
                 break;
         }
@@ -39,7 +39,7 @@ const createInvitation = (invitationData: IInvitationData): IInvitation => {
 
 const updateSocketId = async (userId: string, socketId: string) => {
     try {
-        return await User.updateOne(
+        return await UserModel.updateOne(
             {userId},
             {$set: {socketId: socketId.toString()}},
         );
@@ -48,9 +48,20 @@ const updateSocketId = async (userId: string, socketId: string) => {
     }
 }
 
+const updateIsOnline = async (socketId: string, bool: boolean) => {
+    try {
+        return await UserModel.updateOne(
+            {socketId},
+            {$set: {isOnline: bool}},
+        );
+    } catch (error) {
+        console.error(error);
+    }
+}
+
 const getSocketId = async (userId: string): Promise<string> => {
     try {
-        const user = await User
+        const user = await UserModel
             .findOne({userId})
             .select(DOCUMENT_EXCLUDED_FIELDS);
 
@@ -61,11 +72,11 @@ const getSocketId = async (userId: string): Promise<string> => {
     }
 }
 
-const addNotification = async (subjectId: string, notification: INotification) => {
+const addNotification = async (recipientId: string, notification: INotification) => {
     try {
         const newNotification = await new Notification(notification).save();
         
-        return await User.findOneAndUpdate({userId: subjectId}, {$push: {notifications: notification.id}});
+        return await UserModel.findOneAndUpdate({userId: recipientId}, {$push: {notifications: notification.id}});
     } catch (error) {
         console.error(error);
     }
@@ -74,7 +85,7 @@ const addNotification = async (subjectId: string, notification: INotification) =
 const deleteNotification = async (userId: string, notificationId: string) => {
     try {
         await Notification.findOneAndDelete({id: notificationId});
-        return await User.findOneAndUpdate({userId}, {$pull: {notifications: notificationId}});
+        return await UserModel.findOneAndUpdate({userId}, {$pull: {notifications: notificationId}});
     } catch (error) {
         console.error(error);
     }
@@ -96,5 +107,6 @@ export {
     getSocketId,
     addNotification,
     deleteNotification,
-    createNotification
+    createNotification,
+    updateIsOnline
 }

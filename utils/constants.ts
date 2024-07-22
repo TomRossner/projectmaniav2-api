@@ -5,10 +5,13 @@ config();
 const PORT: number = Number(process.env.PORT) || 3001;
 
 const ROUTES = {
-    AUTH_ROUTE: '/auth',
-    USERS_ROUTE: '/users',
-    PROJECTS_ROUTE: '/projects',
-    NOTIFICATIONS_ROUTE: '/notifications',
+    AUTH_ROUTE: '/api/auth',
+    USERS_ROUTE: '/api/users',
+    SESSIONS_ROUTE: '/api/sessions',
+    NOTIFICATIONS_ROUTE: '/api/notifications',
+    PROJECTS_ROUTE: '/api/projects',
+    STAGES_ROUTE: '/api/stages',
+    TASKS_ROUTE: '/api/tasks',
 }
 
 const MONGODB_URI: string = process.env.MONGODB_URI as string;
@@ -35,6 +38,9 @@ const USER_EXCLUDED_FIELDS: ExcludedFields = {
 
 const DEFAULT_PRIORITY: Priority = 'low';
 
+const ACCESS_TOKEN_TTL: string = '15m';
+const REFRESH_TOKEN_TTL: string = '1y';
+
 export {
     PORT,
     ROUTES,
@@ -46,4 +52,6 @@ export {
     DOCUMENT_EXCLUDED_FIELDS,
     USER_EXCLUDED_FIELDS,
     DEFAULT_PRIORITY,
+    ACCESS_TOKEN_TTL,
+    REFRESH_TOKEN_TTL,
 }

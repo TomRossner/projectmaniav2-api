@@ -1,31 +1,36 @@
 import { config } from "dotenv";
-import { Schema, model } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
-import { Priority } from "../utils/types.js";
+import { Priority, SubTask } from "../utils/types.js";
 import { IStage } from "../utils/interfaces.js";
 import { DEFAULT_PRIORITY } from "../utils/constants.js";
 
 config();
 
-// Define an interface for the Task document
-interface ITaskDoc extends Document {
+// Define an interface for the TaskModel document
+export interface TaskDocument extends mongoose.Document {
     title: string;
     description?: string;
     taskId: string;
-    imgSrc?: string;
+    thumbnailSrc?: string;
     isDone: boolean;
     createdAt: Date;
+    updatedAt: Date;
     priority: Priority;
     dueDate: Date;
-    externalLinks?: string[];
+    externalLinks: string[];
     tags: string[];
     currentStage: Pick<IStage, "stageId" | "title">;
+    assignees: string[];
+    subtasks: SubTask[];
+    createdBy: string;
+    dependencies: string[];
 }
 
 const taskSchema = new Schema({
     title: {
         type: String,
-        require: true,
+        required: true,
     },
     taskId: {
         type: String,
@@ -37,7 +42,9 @@ const taskSchema = new Schema({
     },
     createdAt: {
         type: Date,
-        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
     },
     priority: {
         type: String,
@@ -63,12 +70,30 @@ const taskSchema = new Schema({
     tags: {
         type: [String],
         default: []
-    }
-}, {collection: 'tasks'});
+    },
+    assignees: {
+        type: [String],
+        default: []
+    },
+    subtasks: {
+       type: [Object],
+       default: [] 
+    },
+    createdBy: {
+        type: String
+    },
+    dependencies: {
+        type: [String],
+        default: []
+    },
+}, {
+    collection: 'tasks',
+    timestamps: true,
+});
 
-const Task = model<ITaskDoc>('Task', taskSchema);
+const TaskModel = model<TaskDocument>('TaskModel', taskSchema);
 
 export {
-    Task,
+    TaskModel,
     taskSchema
 }

@@ -1,57 +1,53 @@
-import { config } from "dotenv";
 import jwt from "jsonwebtoken";
-import { Schema, model } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
-import { DEFAULT_BG } from "../utils/constants.js";
-import { IProjectDoc } from "./project.model.js";
+import { DEFAULT_BG, SALT_ROUNDS } from "../utils/constants.js";
+import { ProjectDocument } from "./project.model.js";
+import bcrypt from 'bcrypt';
 
-config();
-
-// Define an interface for the User document
-interface IUserDoc extends Document {
+// Define an interface for the UserModel document
+export interface UserDocument extends mongoose.Document {
     firstName: string;
     lastName: string;
     email: string;
     password: string;
     socketId?: string;
     lastSeen?: Date;
-    createdAt?: Date;
-    isOnline?: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    isOnline: boolean;
     userId: string;
-    imgSrc?: string;
-    mostRecentProject?: Pick<IProjectDoc, "projectId" | "title">;
+    imgSrc: string;
+    mostRecentProject: Pick<ProjectDocument, "projectId" | "title"> | null;
     notifications: string[];
-    
-    // Add the generateAuthToken method to the interface
-    generateAuthToken(): string;
+
+    generateAuthToken: () => string;
+    comparePassword: (candidatePassword: string) => Promise<boolean>;
 }
 
 const userSchema = new Schema({
     firstName: {
         type: String,
-        require: true,
+        required: true,
     },
     lastName: {
         type: String,
-        require: true,
+        required: true,
     },
     email: {
         type: String,
-        require: true,
+        required: true,
+        unique: true,
     },
     password: {
         type: String,
-        require: true,
+        required: true,
     },
     socketId: {
         type: String,
         default: "",
     },
     lastSeen: Date,
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
     isOnline: {
         type: Boolean,
         default: false,
@@ -59,6 +55,7 @@ const userSchema = new Schema({
     userId: {
         type: String,
         default: uuid,
+        unique: true,
     },
     imgSrc: {
         type: String,
@@ -72,10 +69,12 @@ const userSchema = new Schema({
         type: [String],
         default: [],
     }
-}, {collection: 'users'});
+}, {
+    collection: 'users',
+    timestamps: true,
+});
 
 userSchema.method('generateAuthToken', function() {
-    
         const token: string = jwt.sign({
             userId: this.userId,
             email: this.email,
@@ -92,10 +91,24 @@ userSchema.method('generateAuthToken', function() {
     }
 )
 
-const User = model<IUserDoc>('User', userSchema);
+userSchema.pre("save", async function(next) {
+    if (!this.isModified("password")) {
+        return next();
+    }
 
-export {
-    User,
-    IUserDoc,
-    userSchema
+    const salt = await bcrypt.genSalt(SALT_ROUNDS);
+
+    const hash = bcrypt.hashSync(this.password, salt);
+
+    this.password = hash;
+
+    return next();
+});
+
+userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean>{
+    return await bcrypt.compare(candidatePassword, this.password).catch(err => false);
 }
+
+const UserModel = model<UserDocument>('UserModel', userSchema);
+
+export default UserModel;

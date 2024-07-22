@@ -1,14 +1,15 @@
 import { Request, Response } from "express";
 import { comparePasswords, hash } from "../utils/bcrypt.js";
-import { INewUser } from "../utils/interfaces.js";
-import { IUserDoc, User } from "../models/user.model.js";
+import { NewUserData } from "../utils/interfaces.js";
+import { UserDocument } from "../models/user.model.js";
+import UserModel from "../models/user.model.js";
 import { validateUserData } from "../utils/regexp.js";
 
-const login = async (req: Request, res: Response): Promise<Response | void> => {
+const login = async (req: Request, res: Response) => {
     try {
         const {email, password} = req.body;
         
-        const user = await User.findOne({email});
+        const user = await UserModel.findOne({email});
 
         if (!user) return res.status(400).send({error: 'Invalid email or password'});
 
@@ -32,7 +33,7 @@ const login = async (req: Request, res: Response): Promise<Response | void> => {
     }
 }
 
-const signUp = async (req: Request, res: Response): Promise<Response | void> => {
+const signUp = async (req: Request, res: Response) => {
     try {
         const {
             firstName,
@@ -41,11 +42,11 @@ const signUp = async (req: Request, res: Response): Promise<Response | void> => 
             password
         } = req.body;
 
-        const isAlreadyRegistered = await User.findOne({email});
+        const isAlreadyRegistered = await UserModel.findOne({email});
 
-        if (isAlreadyRegistered) return res.status(400).send({error: 'User already registered'});
+        if (isAlreadyRegistered) return res.status(400).send({error: 'UserModel already registered'});
         
-        const newUserData: INewUser = {
+        const newUserData: NewUserData = {
             firstName,
             lastName,
             email,
@@ -56,7 +57,7 @@ const signUp = async (req: Request, res: Response): Promise<Response | void> => 
 
         if (!isValid) return res.status(400).send({error: 'Invalid data'});
 
-        await createNewUser(newUserData);
+        // await createNewUser(newUserData);
 
         return res.status(200).send('Successfully created user');
 
@@ -66,20 +67,13 @@ const signUp = async (req: Request, res: Response): Promise<Response | void> => 
     }
 }
 
-const googleSignIn = async (req: Request, res: Response): Promise<Response | void> => {
+const googleSignIn = async (req: Request, res: Response) => {
     try {
         console.log(req.body);
     } catch (error) {
         console.error(error);
         res.status(400).send({error});
     }
-}
-
-const createNewUser = async (userData: INewUser): Promise<IUserDoc> => {
-    return await new User({
-        ...userData,
-        password: await hash(userData.password)
-    }).save();
 }
 
 export {

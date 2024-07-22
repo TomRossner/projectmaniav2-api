@@ -1,24 +1,24 @@
-import { IProjectDoc } from "../models/project.model.js";
-import { Sender, Subject, Priority, Tag } from "./types.js";
+import { ProjectDocument } from "../models/project.model.js";
+import { Sender, Recipient, Priority, Tag, NotificationType, NotificationData, SubTask } from "./types.js";
 
 interface IBaseUser {
     email: string;
     password: string;
 }
 
-interface INewUser extends IBaseUser {
+interface NewUserData extends IBaseUser {
     firstName: string;
     lastName: string;
 }
 
-interface IUser extends INewUser {
+interface IUser extends NewUserData {
     createdAt: Date;
     lastSeen: Date;
     isOnline: boolean;
     imgSrc: string;
     userId: string;
     socketId: string;
-    mostRecentProject?: Pick<IProjectDoc, "projectId" | "title"> | null;
+    mostRecentProject?: Pick<ProjectDocument, "projectId" | "title"> | null;
 }
 
 interface IStage {
@@ -35,15 +35,19 @@ interface ITask {
     priority: Priority;
     isDone: boolean;
     title: string;
-    externalLinks?: string[];
+    externalLinks: string[];
     tags: Tag[];
     currentStage: Pick<IStage, "stageId" | "title">,
+    createdBy: string;
+    assignees: string[];
+    subtasks: SubTask[];
+    dependencies: string[];
 }
 
 interface IInvitationData {
-    projectData: Pick<IProjectDoc, "projectId" | "title">;
+    projectData: Pick<ProjectDocument, "projectId" | "title">;
     sender: Sender;
-    subject: Subject;
+    recipient: Recipient;
 }
 
 interface IInvitation extends IInvitationData {
@@ -52,12 +56,27 @@ interface IInvitation extends IInvitationData {
     id: string;
 }
 
+interface INotification extends NewNotificationData {
+    id: string;
+    createdAt: Date;
+    isSeen: boolean;
+}
+
+interface NewNotificationData {
+    type: NotificationType;
+    sender: Sender;
+    recipient: Recipient;
+    data: NotificationData;
+}
+
 export {
     IBaseUser,
-    INewUser,
+    NewUserData,
     IUser,
     ITask,
     IStage,
     IInvitation,
     IInvitationData,
+    NewNotificationData,
+    INotification
 }

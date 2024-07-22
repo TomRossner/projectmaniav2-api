@@ -1,4 +1,4 @@
-import { INewUser } from "./interfaces.js";
+import { NewUserData } from "./interfaces.js";
 
 // Regex patterns
 const REGEX_PATTERNS = {
@@ -34,7 +34,7 @@ const checkPattern = (type: string, input: string): false | RegExpMatchArray | n
 }
 
 // Check user inputs
-const validateUserData = (userData: INewUser) => {
+const validateUserData = (userData: NewUserData) => {
     const {email, password, firstName, lastName} = userData;
     
     if (

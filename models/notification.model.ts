@@ -1,12 +1,12 @@
 import { Schema, model } from "mongoose";
 import { v4 as uuid } from "uuid";
-import { INotification } from "../utils/types.js";
+import { INotification } from "../utils/interfaces.js";
 
 const notificationSchema = new Schema({
     type: {
         type: String,
-        enum: "invitation" || "message" || "friendRequest" || "joinedProject",
-        default: '',
+        enum: "invitation" || "message" || "friendRequest" || "default" || "assignment",
+        default: 'default',
     },
     id: {
         type: String,
@@ -19,7 +19,7 @@ const notificationSchema = new Schema({
     sender: {
         type: Object,
     },
-    subject: {
+    recipient: {
         type: Object,
     },
     isSeen: {
@@ -29,7 +29,10 @@ const notificationSchema = new Schema({
     data: {
         type: Object,
     },
-}, {collection: 'notifications'});
+}, {
+    collection: 'notifications',
+    timestamps: true,
+});
 
 const Notification = model<INotification>('Notification', notificationSchema);
 

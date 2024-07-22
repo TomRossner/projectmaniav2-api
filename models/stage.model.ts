@@ -1,22 +1,24 @@
 import { config } from "dotenv";
-import { Schema, model } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
 import { ITask } from "../utils/interfaces.js";
 import { taskSchema } from "./task.model.js";
 
 config();
 
-// Define an interface for the Stage document
-interface IStageDoc extends Document {
+// Define an interface for the StageModel document
+export interface StageDocument extends mongoose.Document {
     title: string;
     tasks: ITask[];
     stageId: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 const stageSchema = new Schema({
     title: {
         type: String,
-        require: true,
+        required: true,
     },
     stageId: {
         type: String,
@@ -24,18 +26,23 @@ const stageSchema = new Schema({
     },
     tasks: {
         type: [taskSchema],
-        require: true,
+        required: true,
         default: []
     },
     createdAt: {
         type: Date,
-        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
     }
-}, {collection: 'stages'});
+}, {
+    collection: 'stages',
+    timestamps: true,
+});
 
-const Stage = model<IStageDoc>('Stage', stageSchema);
+const StageModel = model<StageDocument>('StageModel', stageSchema);
 
 export {
-    Stage,
+    StageModel,
     stageSchema
 }

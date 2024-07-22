@@ -13,11 +13,15 @@ import { Server, Socket } from "socket.io";
 import _ from "lodash";
 import { connectRedisClient } from "./database/redis.config.js";
 import { createClient } from "redis";
-import { addNotification, createNotification, getSocketId, updateSocketId } from "./utils/utils.js";
-import { Invitation } from "./models/invitation.model.js";
+import { addNotification, createNotification, getSocketId, updateIsOnline, updateSocketId } from "./utils/utils.js";
 import NotificationsRouter from "./routes/notifications.routes.js";
-import { NewNotificationData } from "./utils/types.js";
-
+import { NewNotificationData } from "./utils/interfaces.js";
+import SessionRouter from "./routes/session.routes.js";
+import deserializeUser from "./middlewares/deserializeUser.js";
+import StagesRouter from "./routes/stages.routes.js";
+import TasksRouter from "./routes/tasks.routes.js";
+import requireUser from "./middlewares/requireUser.js";
+import cookieParser from "cookie-parser";
 config();
 
 const app = express();
@@ -29,54 +33,67 @@ const io = new Server({
 });
 
 app.use(json({
-    limit: JSON_PAYLOAD_LIMIT
+    limit: JSON_PAYLOAD_LIMIT,
 }));
 app.use(urlencoded({
     extended: true,
     limit: JSON_PAYLOAD_LIMIT
 }));
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+}));
 app.use(helmet());
 app.use(morgan('dev'));
+app.use(cookieParser());
 
 const {
     AUTH_ROUTE,
     USERS_ROUTE,
     PROJECTS_ROUTE,
-    NOTIFICATIONS_ROUTE
+    NOTIFICATIONS_ROUTE,
+    SESSIONS_ROUTE,
+    STAGES_ROUTE,
+    TASKS_ROUTE
 } = ROUTES;
 
+app.use(deserializeUser);
 app.use(AUTH_ROUTE, AuthRouter);
 app.use(USERS_ROUTE, UsersRouter);
-app.use(PROJECTS_ROUTE, VERIFY_AUTH, ProjectsRouter);
-app.use(NOTIFICATIONS_ROUTE, VERIFY_AUTH, NotificationsRouter);
+app.use(SESSIONS_ROUTE, SessionRouter);
+app.use(NOTIFICATIONS_ROUTE, requireUser, NotificationsRouter);
+app.use(PROJECTS_ROUTE, requireUser, ProjectsRouter);
+app.use(STAGES_ROUTE, requireUser, StagesRouter);
+app.use(TASKS_ROUTE, requireUser, TasksRouter);
 
 const listenToEvents = (ioServer: Server) => {
     const onConnection = (socket: Socket) => {
         const sid = socket.id;
-
         console.log(`🔌 ${sid} is now connected`);
 
-        const onDisconnect = () => {
+        const onDisconnect = async () => {
             console.log(`❌ ${sid} has disconnected`);
+            await updateIsOnline(sid, false);
         }
-
+        
         const onOnline = async (userId: string) => {
-            console.log("User id: ", userId);
-            socket.broadcast.emit("online", {userId});
-
             await updateSocketId(userId, sid);
+            await updateIsOnline(sid, true);
+
+            console.log(`🔌 ${sid} is now connected`);
+            console.log("UserModel id: ", userId);
+            
+            socket.broadcast.emit("online", {userId});
         }
 
         const onNotification = async (data: NewNotificationData) => {
-            // const invitation = await new Invitation(createInvitation(invitationData)).save();
-            const subjectSocketId = await getSocketId(data.subject.userId);
+            const recipientSocketId = await getSocketId(data.recipient.userId);
 
             const notification = createNotification(data);
             
-            await addNotification(data.subject.userId, notification);
+            await addNotification(data.recipient.userId, notification);
 
-            socket.to(subjectSocketId).emit("notification", notification);
+            socket.to(recipientSocketId).emit("notification", notification);
         }
 
         socket
