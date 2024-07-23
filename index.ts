@@ -5,7 +5,7 @@ import morgan from "morgan";
 import helmet from "helmet";
 import AuthRouter from "./routes/auth.routes.js";
 import UsersRouter from "./routes/users.routes.js";
-import { JSON_PAYLOAD_LIMIT, PORT, REQUEST_TIMEOUT, ROUTES } from "./utils/constants.js";
+import { JSON_PAYLOAD_LIMIT, MONGODB_URI, PORT, REQUEST_TIMEOUT, ROUTES } from "./utils/constants.js";
 import { connectDB } from "./database/mongodb.config.js";
 import ProjectsRouter from "./routes/projects.routes.js";
 import { VERIFY_AUTH } from "./middlewares/auth.middleware.js";
@@ -21,7 +21,9 @@ import deserializeUser from "./middlewares/deserializeUser.js";
 import StagesRouter from "./routes/stages.routes.js";
 import TasksRouter from "./routes/tasks.routes.js";
 import requireUser from "./middlewares/requireUser.js";
-import cookieParser from "cookie-parser";
+// import cookieParser from "cookie-parser";
+import session from "express-session";
+import MongoStore from "connect-mongo";
 config();
 
 const app = express();
@@ -45,7 +47,24 @@ app.use(cors({
 }));
 app.use(helmet());
 app.use(morgan('dev'));
-app.use(cookieParser());
+app.use(session({
+    secret: process.env.PRIVATE_KEY as string,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI as string,
+        collectionName: 'sessions',
+    }),
+    name: 'sessionAccessToken',
+    cookie: {
+        domain: 'localhost',
+        httpOnly: true,
+        maxAge: 900000,
+        path: '/',
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production', 
+    },
+
+}));
+// app.use(cookieParser());
 
 const {
     AUTH_ROUTE,
