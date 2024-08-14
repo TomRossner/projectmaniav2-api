@@ -5,7 +5,7 @@ import morgan from "morgan";
 import helmet from "helmet";
 import AuthRouter from "./routes/auth.routes.js";
 import UsersRouter from "./routes/users.routes.js";
-import { JSON_PAYLOAD_LIMIT, PORT, REQUEST_TIMEOUT, ROUTES } from "./utils/constants.js";
+import { CLIENT_URL, JSON_PAYLOAD_LIMIT, PORT, REQUEST_TIMEOUT, ROUTES } from "./utils/constants.js";
 import { connectDB } from "./database/mongodb.config.js";
 import ProjectsRouter from "./routes/projects.routes.js";
 import { Server, Socket } from "socket.io";
@@ -52,7 +52,7 @@ app.use(urlencoded({
     limit: JSON_PAYLOAD_LIMIT
 }));
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: CLIENT_URL,
     credentials: true,    
 }));
 app.use(helmet());
