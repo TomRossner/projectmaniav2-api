@@ -3,11 +3,15 @@ import { Profile, Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import _ from "lodash";
 import { findUser, updateUser } from '../services/user.service.js';
 import { createGoogleUser, NewGoogleUserData, updateGoogleUser } from '../services/google_user.service.js';
+import { PORT } from '../utils/constants.js';
+import { config } from 'dotenv';
+
+config();
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID as string,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-    callbackURL: 'http://localhost:3001/api/auth/oauth2/redirect/google',
+    callbackURL: `${process.env.API_URL as string}:${PORT}/api/auth/oauth2/redirect/google`,
     scope: ['profile', 'email'],
     passReqToCallback: true,
 },
