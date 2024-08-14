@@ -6,7 +6,9 @@ import UserModel from "../models/user.model.js";
 import { IInvitation, IInvitationData, INotification, NewNotificationData } from "./interfaces.js";
 import { Model } from "./types.js";
 import { DOCUMENT_EXCLUDED_FIELDS } from "./constants.js";
-import { Notification } from "../models/notification.model.js";
+import { NotificationModel } from "../models/notification.model.js";
+import { updateStage } from "../services/stage.service.js";
+import { updateUser } from "../services/user.service.js";
 
 const updateFieldName = async (model: Model, currName: string, newName: string) => {
     const renameField = { [currName]: newName };
@@ -50,10 +52,9 @@ const updateSocketId = async (userId: string, socketId: string) => {
 
 const updateIsOnline = async (socketId: string, bool: boolean) => {
     try {
-        return await UserModel.updateOne(
-            {socketId},
-            {$set: {isOnline: bool}},
-        );
+        const update = await updateUser({socketId}, {isOnline: bool});
+
+        return update;
     } catch (error) {
         console.error(error);
     }
@@ -72,11 +73,9 @@ const getSocketId = async (userId: string): Promise<string> => {
     }
 }
 
-const addNotification = async (recipientId: string, notification: INotification) => {
+const addNotificationToUser = async (recipientId: string, notification: INotification) => {
     try {
-        const newNotification = await new Notification(notification).save();
-        
-        return await UserModel.findOneAndUpdate({userId: recipientId}, {$push: {notifications: notification.id}});
+        return await UserModel.findOneAndUpdate({userId: recipientId}, {$push: {notifications: notification.notificationId}});
     } catch (error) {
         console.error(error);
     }
@@ -84,20 +83,46 @@ const addNotification = async (recipientId: string, notification: INotification)
 
 const deleteNotification = async (userId: string, notificationId: string) => {
     try {
-        await Notification.findOneAndDelete({id: notificationId});
+        await NotificationModel.findOneAndDelete({id: notificationId});
         return await UserModel.findOneAndUpdate({userId}, {$pull: {notifications: notificationId}});
     } catch (error) {
         console.error(error);
     }
 }
 
-const createNotification = (notificationData: NewNotificationData): INotification => {
-    return {
-        ...notificationData,
-        isSeen: false,
-        id: uuid(),
-        createdAt: new Date(Date.now())
+const logUnidentifiedStages = async (userId: string) => {
+    const stages = await StageModel.find({createdBy: userId});
+    // console.log(stages.map(s => ({title: s.title, stageId: s.stageId})))
+
+    
+    const unidentifiedStages: string[] = [];
+    
+    for (const stage of stages) {
+        const stageParentProject = await ProjectModel.findOne({projectId: stage.parentProjectId});
+        // const stagesWithoutCreatedBy = await StageModel.find({parentProjectId: stage.parentProjectId, createdBy: {$exists: false}});
+        // console.log(stagesWithoutCreatedBy)
+
+        // for (const s of stagesWithoutCreatedBy) {
+        //     await updateStage({stageId: s.stageId}, {createdBy: stages[0].createdBy});
+        // }
+
+        // console.log(stageParentProject?.stages.filter(s => !s.createdBy))
+        
+        if (!stageParentProject) {
+            unidentifiedStages.push(stage.stageId);
+
+            // const deleteUnidentified = async (stageId: string) => {
+            //     return await StageModel.findOneAndDelete({stageId});
+            // }
+            
+            // /!\ DELETE UNIDENTIFIED - CAREFUL /!\
+            // await deleteUnidentified(stage.stageId);
+        }
+
     }
+
+    // console.log("Unidentified stages: ", unidentifiedStages);
+    // console.log(`Total stages created by user ${userId}: `, stages.length);
 }
 
 export {
@@ -105,8 +130,8 @@ export {
     createInvitation,
     updateSocketId,
     getSocketId,
-    addNotification,
+    addNotificationToUser,
     deleteNotification,
-    createNotification,
-    updateIsOnline
+    updateIsOnline,
+    logUnidentifiedStages,
 }

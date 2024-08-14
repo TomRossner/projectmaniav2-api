@@ -25,6 +25,8 @@ export interface TaskDocument extends mongoose.Document {
     subtasks: SubTask[];
     createdBy: string;
     dependencies: string[];
+    projectId: string;
+    lastUpdatedBy: string;
 }
 
 const taskSchema = new Schema({
@@ -80,12 +82,21 @@ const taskSchema = new Schema({
        default: [] 
     },
     createdBy: {
-        type: String
+        type: String,
+        required: true,
     },
     dependencies: {
         type: [String],
         default: []
     },
+    projectId: {
+        type: String,
+        required: true,
+    },
+    lastUpdatedBy: {
+        type: String,
+        required: true,
+    }
 }, {
     collection: 'tasks',
     timestamps: true,

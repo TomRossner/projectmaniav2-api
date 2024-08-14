@@ -1,10 +1,13 @@
 import { Router } from "express";
-import { getNotifications, updateNotificationIsSeen, removeNotification } from "../controllers/notifications.controller.js";
+import { createNotificationHandler, updateNotificationHandler, getNotificationsHandler, deleteNotificationHandler } from "../controllers/notifications.controller.js";
+import validateResource from "../middlewares/validateResource.js";
+import { createNotificationSchema } from "../schemas/notification.schema.js";
 
 const NotificationsRouter = Router();
 
-NotificationsRouter.post('/all', getNotifications);
-NotificationsRouter.put('/:notificationId/is-seen', updateNotificationIsSeen);
-NotificationsRouter.delete('/:notificationId', removeNotification);
+NotificationsRouter.get('/', getNotificationsHandler);
+NotificationsRouter.post('/', validateResource(createNotificationSchema), createNotificationHandler);
+NotificationsRouter.put('/:notificationId', updateNotificationHandler);
+NotificationsRouter.delete('/:notificationId', deleteNotificationHandler);
 
 export default NotificationsRouter;

@@ -13,6 +13,10 @@ export interface StageDocument extends mongoose.Document {
     stageId: string;
     createdAt: Date;
     updatedAt: Date;
+    parentProjectId: string;
+    createdBy: string;
+    projectId: string;
+    lastUpdatedBy: string;
 }
 
 const stageSchema = new Schema({
@@ -34,6 +38,18 @@ const stageSchema = new Schema({
     },
     updatedAt: {
         type: Date,
+    },
+    createdBy: {
+        type: String,
+        required: true,
+    },
+    projectId: {
+        type: String,
+        required: true,
+    },
+    lastUpdatedBy: {
+        type: String,
+        required: true,
     }
 }, {
     collection: 'stages',

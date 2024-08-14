@@ -1,5 +1,5 @@
 import { ProjectDocument } from "../models/project.model.js";
-import { Sender, Recipient, Priority, Tag, NotificationType, NotificationData, SubTask } from "./types.js";
+import { Sender, Recipient, Priority, Tag, NotificationType, NotificationData, SubTask, TeamMember, ActivityType } from "./types.js";
 
 interface IBaseUser {
     email: string;
@@ -25,6 +25,9 @@ interface IStage {
     stageId: string;
     tasks: ITask[];
     title: string;
+    createdBy: string;
+    projectId: string;
+    lastUpdatedBy: string;
 }
 
 interface ITask {
@@ -42,6 +45,8 @@ interface ITask {
     assignees: string[];
     subtasks: SubTask[];
     dependencies: string[];
+    projectId: string;
+    lastUpdatedBy: string;
 }
 
 interface IInvitationData {
@@ -57,7 +62,7 @@ interface IInvitation extends IInvitationData {
 }
 
 interface INotification extends NewNotificationData {
-    id: string;
+    notificationId: string;
     createdAt: Date;
     isSeen: boolean;
 }
@@ -69,6 +74,36 @@ interface NewNotificationData {
     data: NotificationData;
 }
 
+interface IProject extends NewProjectData {
+    stages: IStage[];
+    projectId: string;
+    subtitle?: string;
+    team: TeamMember[];
+    activities: Activity[];
+}
+
+interface NewProjectData {
+    title: string,
+    team: TeamMember[];
+    createdBy: string;
+    stages: IStage[];
+    lastUpdatedBy: string;
+}
+
+interface NewActivityData {
+    user: TeamMember;
+    type: ActivityType;
+    data: ITask | IStage | IProject | TeamMember;
+    projectId: string;
+}
+
+interface Activity extends NewActivityData {
+    createdAt: Date;
+    createdBy: string;
+    updatedAt: Date;
+    activityId: string;
+}
+
 export {
     IBaseUser,
     NewUserData,
@@ -78,5 +113,8 @@ export {
     IInvitation,
     IInvitationData,
     NewNotificationData,
-    INotification
+    INotification,
+    IProject,
+    NewActivityData,
+    Activity,
 }

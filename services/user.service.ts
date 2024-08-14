@@ -24,21 +24,22 @@ export async function validatePassword({email, password}: {email: string, passwo
         return false;
     }
 
-    return _.omit(user.toJSON(), ["__v", "password"]);
+    return _.omit(user.toJSON(), ["__v", "password"]) as UserDocument;
 }
 
 export const findUser = async (query: FilterQuery<UserDocument>, options?: {withId?: boolean}) => {
     const user = await UserModel.findOne(query).lean();
 
-    return _.omit(user, [
-        !options?.withId && "_id",
-        "__v",
-        "password"
-    ]) || null;
+    return user
+        ? _.omit(user, [
+            !options?.withId && "_id",
+            "__v",
+            "password"
+        ]) : null;
 }
 
 export const updateUser = async (query: FilterQuery<UserDocument>, update: UpdateFilter<UserDocument>) => {
-    return await UserModel.findOneAndUpdate(query, update, {new: true});
+    return await UserModel.findOneAndUpdate(query, update, {new: true}).lean();
 }
 
 export const deleteUser = async (userId: string) => {

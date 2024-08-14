@@ -8,7 +8,7 @@ export const createTaskSchema = object({
         priority: string({
             required_error: 'Priority is required'
         }),
-        dueDate: date().optional(),
+        dueDate: string().optional(),
         description: string().optional(),
         thumbnailSrc: string().optional(),
         isDone: boolean().default(false),
@@ -32,5 +32,11 @@ export const createTaskSchema = object({
             title: string(),
             subtaskId: string()
         })).optional(),
+        projectId: string({
+            required_error: "projectId is required"
+        }),
+        lastUpdatedBy: string({
+            required_error: "lastUpdatedBy is required"
+        })
     })
 });
