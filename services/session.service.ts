@@ -1,52 +1,47 @@
-import mongoose, { FilterQuery, UpdateQuery } from "mongoose";
-import SessionModel, { SessionDocument } from "../models/session.model.js";
-import { signJwt, verifyJwt } from "../utils/jwt.utils.js";
-import _ from "lodash";
-import { findUser } from "./user.service.js";
-import { ACCESS_TOKEN_TTL } from "../utils/constants.js";
+// import { Request, Response } from "express";
+// import { validatePassword } from "./user.service.js";
+// import { UserCredentials } from "../utils/types.js";
 
-export async function createSession(userId: string, userAgent: string) {
-    const session = await SessionModel.create({
-        user: userId,
-        userAgent
-    });
+// export const createUserSessionHandler = async (req: Request, res: Response) => {
+//     try {
+//         const {
+//             body: {
+//                 email,
+//                 password
+//             }
+//         } = req;
 
-    return session.toJSON();
-}
+//         console.log("Session id: ", req.session.id);
+        
+//         const credentials: UserCredentials = {
+//             email,
+//             password
+//         }
 
-export const findSessions = async (query: FilterQuery<SessionDocument>) => {
-    return await SessionModel.find(query).lean();
-}
+//         const user = await validatePassword(credentials);
+    
+//         if (!user) {
+//             return res.status(401).send("Invalid email or password");
+//         }
 
-export const updateSession = async (query: FilterQuery<SessionDocument>, update: UpdateQuery<SessionDocument>) => {
-    return await SessionModel.findOneAndUpdate(query, update);
-}
+//         req.session.user = user;
 
-export const reIssueAccessToken = async ({refreshToken}: {refreshToken: string}) => {
-    const {decoded} = verifyJwt(refreshToken, "Refresh token");
+//         return res.status(200).send(user);
+//     } catch (error) {
+//         console.error(error);
+//         res.status(401).send({error: "Wrong credentials"});
+//     }
+// }
 
-    if (!decoded || !decoded) {
-        return false;
-    }
+// export const deleteSessionHandler = async (req: Request, res: Response) => {
+//     try {
+//         req.session.destroy((err) => {
+//             return res.sendStatus(200);
+//         });
 
-    const session = await SessionModel.findById(_.get(decoded, "session"));
-    console.log("Session: ", session);
-
-    if (!session || !session.valid) {
-        return false;
-    }
-
-    const user = await findUser({_id: new mongoose.Types.ObjectId(session.user)});
-    console.log("User: ", user);
-
-    if (!user) {
-        return false;
-    }
-
-    const accessToken = signJwt(
-        { ...user, session: session._id },
-        { expiresIn: ACCESS_TOKEN_TTL }
-    );
-
-    return accessToken;
-}
+//         return res.sendStatus(400);
+//     } catch (error) {
+//         console.error(error);
+//         res.sendStatus(400);
+//     }
+// }

@@ -1,25 +1,12 @@
 import { Request, Response } from "express";
-import { Notification } from "../models/notification.model.js";
-import { INotification } from "../utils/interfaces.js";
-import { DOCUMENT_EXCLUDED_FIELDS } from "../utils/constants.js";
+import { NotificationModel } from "../models/notification.model.js";
+import { createNotification, deleteNotification, findNotifications, updateNotification } from "../services/notification.service.js";
 
-const getNotifications = async (req: Request, res: Response) => {
+export const getNotificationsHandler = async (req: Request, res: Response) => {
     try {
-        const {notificationsIds} = req.body;
+        const {userId} = req.query;
 
-        if (!notificationsIds?.length) return res.status(200).send([]);
-
-        const notifications: INotification[] = [];
-
-        for (const id of notificationsIds) {
-            const notification = await Notification
-                .findOne({id})
-                .select(DOCUMENT_EXCLUDED_FIELDS);
-
-            if (notification) {
-                notifications.push(notification);
-            }
-        }
+        const notifications = await findNotifications(userId as string) ?? [];
 
         return res.status(200).send(notifications);
     } catch (error) {
@@ -28,39 +15,54 @@ const getNotifications = async (req: Request, res: Response) => {
     }
 }
 
-const updateNotificationIsSeen = async (req: Request, res: Response) => {
+export const createNotificationHandler = async (req: Request, res: Response) => {
     try {
-        const {notificationId: id} = req.params;
-        const {isSeen} = req.body;
+        console.log(req.body)
+        const newNotificationData = req.body;
 
-        await Notification.findOneAndUpdate({id}, {$set: {isSeen}});
+        const notification = await createNotification(newNotificationData);
 
-        return res.status(200).send('Successfully updated notification');
+        if (!notification) { 
+            return res.sendStatus(400);
+        }
+
+        return res.status(201).send(notification);
     } catch (error) {
         console.error(error);
-        return res.status(400).send('Failed to update notification');
+        res.sendStatus(400);
     }
 }
 
-const removeNotification = async (req: Request, res: Response) => {
+export const updateNotificationHandler = async (req: Request, res: Response) => {
     try {
-        const {notificationId: id} = req.params;
+        const {notificationId} = req.params;
 
-        const removed = await Notification.findOneAndDelete({id});
+        const notification = await updateNotification({notificationId}, req.body);
 
-        if (!removed) {
-            return res.status(400).send('Failed removing notification');
-        } else {
-            return res.status(200).send('Successfully removed notification');
+        if (!notification) {
+            throw new Error("Failed to update notification");
         }
+
+        return res.status(200).send(notification);
+    } catch (error) {
+        console.error(error);
+        res.status(400).send('Failed to update notification');
+    }
+}
+
+export const deleteNotificationHandler = async (req: Request, res: Response) => {
+    try {
+        const {notificationId} = req.params;
+
+        const notification = await deleteNotification(notificationId); 
+
+        if (!notification) {
+            throw new Error('Failed removing notification');
+        }
+
+        return res.sendStatus(200);
     } catch (error) {
         console.error(error);
         res.status(400).send('Failed removing notification');
     }
-}
-
-export {
-    getNotifications,
-    updateNotificationIsSeen,
-    removeNotification,
 }

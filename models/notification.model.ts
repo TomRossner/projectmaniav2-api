@@ -1,6 +1,17 @@
-import { Schema, model } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 import { v4 as uuid } from "uuid";
-import { INotification } from "../utils/interfaces.js";
+import { NotificationData, NotificationType, Recipient, Sender } from "../utils/types.js";
+
+export interface NotificationDocument extends mongoose.Document {
+    type: NotificationType;
+    notificationId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    sender: Sender;
+    recipient: Recipient;
+    isSeen: boolean;
+    data: NotificationData;
+}
 
 const notificationSchema = new Schema({
     type: {
@@ -8,19 +19,26 @@ const notificationSchema = new Schema({
         enum: "invitation" || "message" || "friendRequest" || "default" || "assignment",
         default: 'default',
     },
-    id: {
+    notificationId: {
         type: String,
-        default: uuid
+        default: uuid,
+        required: true
     },
     createdAt: {
         type: Date,
         default: Date.now,
     },
+    updatedAt: {
+        type: Date,
+        default: Date.now,
+    },
     sender: {
         type: Object,
+        required: true
     },
     recipient: {
         type: Object,
+        required: true
     },
     isSeen: {
         type: Boolean,
@@ -34,9 +52,9 @@ const notificationSchema = new Schema({
     timestamps: true,
 });
 
-const Notification = model<INotification>('Notification', notificationSchema);
+const NotificationModel = model<NotificationDocument>('NotificationModel', notificationSchema);
 
 export {
-    Notification,
+    NotificationModel,
     notificationSchema
 }

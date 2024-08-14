@@ -1,12 +1,25 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
+import { UserDocument } from "../models/user.model.js";
+import { Session } from "express-session";
 
-const requireUser = (req: Request, res: Response, next: NextFunction) => {
-    const user = res.locals.user;
-    console.log(user)
+interface PassportSession extends Session{
+    passport?: {
+        user?: UserDocument;
+    };
+}
 
-    if (!user) {
-        return res.sendStatus(403);
+interface SessionRequest extends Request {
+    session: PassportSession;
+    user?: Express.User;
+}
+
+const requireUser: RequestHandler = (req: SessionRequest, res: Response, next: NextFunction) => {
+    
+    if (!req.session.passport?.user) {
+        return res.sendStatus(401);
     }
+    
+    req.user = req.session.passport?.user;
 
     return next();
 } 

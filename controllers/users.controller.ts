@@ -6,14 +6,29 @@ import { ExcludedFieldKeys, SelectedFields } from "../utils/types.js";
 import { DOCUMENT_EXCLUDED_FIELDS, USER_EXCLUDED_FIELDS } from "../utils/constants.js";
 import { IUser } from "../utils/interfaces.js";
 import { createUser, deleteUser, findUser, updateUser } from "../services/user.service.js";
-import { CreateUserData } from "../schema/user.schema.js";
+import { CreateUserData } from "../schemas/user.schema.js";
 import omit from "lodash/omit.js";
-import { findSessions } from "../services/session.service.js";
+import { deleteGoogleUser, findGoogleUser, updateGoogleUser } from "../services/google_user.service.js";
+import GoogleUserModel from "../models/google_user.model.js";
 
 export async function createUserHandler(req: Request<{}, {}, CreateUserData['body']>, res: Response) {
     try {
+        const isAlreadyRegistered = await findUser({email: req.body.email}) 
+            || await findGoogleUser({email: req.body.email});
+        
+        if (!!isAlreadyRegistered) {
+            throw new Error("User already registered");
+        }
+
         const user = await createUser(req.body);
-        return res.send(omit(user, ['password', '__v', '_id']));
+
+        return res
+            .status(201)
+            .send(omit(user, [
+                'password',
+                '__v',
+                '_id'
+            ]));
     } catch (error: any) {
         console.error(error);
         return res.status(409).send(error.message)
@@ -36,14 +51,19 @@ const getAllUsers = async (req: Request, res: Response) => {
 const getUserById = async (req: Request, res: Response) => {
     try {
         const {userId} = req.params;
+        console.log("User by id: ", req.params);
 
         const user: SelectedFields<UserDocument, ExcludedFieldKeys> | null = await UserModel
             .findOne({ userId })
             .select<SelectedFields<UserDocument, ExcludedFieldKeys>>(USER_EXCLUDED_FIELDS);
 
-        if (!user) return res.status(400).send({error: 'UserModel not found'});
+        const googleUser: SelectedFields<UserDocument, ExcludedFieldKeys> | null = await GoogleUserModel
+            .findOne({ userId })
+            .select<SelectedFields<UserDocument, ExcludedFieldKeys>>(USER_EXCLUDED_FIELDS);
+
+        if (!user && !googleUser) throw new Error('User not found');
         
-        res.status(200).send(user);
+        res.status(200).send(user || googleUser);
     } catch (error) {
         console.error(error);
         res.status(400).send({error: 'Failed fetching user using id'});
@@ -58,9 +78,13 @@ const getUserByEmail = async (req: Request, res: Response) => {
             .findOne({ email })
             .select<SelectedFields<UserDocument, ExcludedFieldKeys>>(USER_EXCLUDED_FIELDS);
 
-        if (!user) return res.status(400).send({error: 'UserModel not found'});
+        const googleUser: SelectedFields<UserDocument, ExcludedFieldKeys> | null = await GoogleUserModel
+        .findOne({ email })
+        .select<SelectedFields<UserDocument, ExcludedFieldKeys>>(USER_EXCLUDED_FIELDS);
+
+        if (!user && !googleUser) throw new Error('User not found');
         
-        res.status(200).send(user);
+        res.status(200).send(user || googleUser);
     } catch (error) {
         console.error(error);
         res.status(400).send({error: 'Failed fetching user using email'});
@@ -96,11 +120,27 @@ export const updateUserHandler = async (req: Request, res: Response) => {
     try {
         const {userId} = req.params;
 
+        const isGoogleUser = await findGoogleUser({userId});
+
+        if (isGoogleUser) {
+            const googleUser = await updateGoogleUser({userId}, req.body);
+
+            if (!googleUser) {
+                throw new Error('Failed updating user');
+            }
+
+            req.user = googleUser as UserDocument;
+
+            return res.status(200).send(googleUser);
+        }
+
         const user = await updateUser({userId}, req.body);
 
         if (!user) {
-            return res.status(400).send({error: "Failed updating user"});
+            throw new Error("Failed updating user");
         }
+        
+        req.user = user as UserDocument;
 
         return res.status(200).send(user);
     } catch (error) {
@@ -113,18 +153,22 @@ export const deleteUserHandler = async (req: Request, res: Response) => {
     try {
         const {userId} = req.params;
 
-        const user = await findUser({userId}, {withId: true});
+        const isGoogleUser = await findGoogleUser({userId});
+
+        if (isGoogleUser) {
+            const deletedGoogleUser = await deleteGoogleUser(userId);
+
+            if (!deletedGoogleUser) {
+                throw new Error("Failed deleting user");
+            }
+    
+            return res.sendStatus(200);
+        }
 
         const deleted = await deleteUser(userId);
 
         if (!deleted) {
-            return res.status(400).send({error: "Failed deleting user"});
-        }
-
-        const sessions = await findSessions({user: user._id});
-
-        if (sessions.length) {
-            console.log(sessions);
+            throw new Error("Failed deleting user");
         }
 
         return res.sendStatus(200);
@@ -156,9 +200,9 @@ const updateUserPassword = async (req: Request, res: Response) => {
         const {password, newPassword} = req.body;
         const {userId} = req.params;
 
-        const user = await UserModel.findOne({userId});
+        const user = await findUser({userId});
 
-        if (!user) return res.status(400).send({error: 'UserModel not found'});
+        if (!user) throw new Error('User not found');
 
         const dbPassword = user?.password as string;
 
@@ -198,9 +242,17 @@ const getUsersByQuery = async (req: Request, res: Response) => {
             ]})
             .lean()
             .select(DOCUMENT_EXCLUDED_FIELDS);
+        
+        const googleUsers: SelectedFields<IUser, ExcludedFieldKeys>[] = await GoogleUserModel
+        .find({$or: [
+            { firstName: {$regex: regex} },
+            { lastName: {$regex: regex} },
+        ]})
+        .lean()
+        .select(DOCUMENT_EXCLUDED_FIELDS);
 
-        if (!!users.length) {
-            return res.status(200).send(users);
+        if (!!users.length || !!googleUsers.length) {
+            return res.status(200).send(users.concat(googleUsers));
         }
         
         return res.status(200).send([]);
@@ -211,7 +263,7 @@ const getUsersByQuery = async (req: Request, res: Response) => {
 }
 
 const getCurrentUser = async (req: Request, res: Response) => {
-    return res.send(res.locals.user);
+    return res.send(req.user);
 }
 
 export {

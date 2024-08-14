@@ -11,6 +11,10 @@ export const createTask = async (newTaskData: Omit<TaskDocument, "taskId" | "cre
     }
 }
 
+export const getTasks = async (userId: string, stageId: string) => {
+    return await TaskModel.find({"currentStage.stageId": stageId});
+}
+
 export const updateTasks = async (tasks: ITask[]) => {
     try {
         for (const task of tasks) {

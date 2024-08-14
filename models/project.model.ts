@@ -1,8 +1,9 @@
 import { config } from "dotenv";
 import mongoose, { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
-import { IStage } from "../utils/interfaces.js";
+import { Activity, IStage } from "../utils/interfaces.js";
 import { stageSchema } from "./stage.model.js";
+import { TeamMember } from "../utils/types.js";
 
 config();
 
@@ -11,10 +12,13 @@ interface ProjectDocument extends mongoose.Document {
     title: string;
     projectId: string;
     stages: IStage[];
+    team: TeamMember[];
     createdAt: Date;
     updatedAt: Date;
     subtitle?: string;
     createdBy: string;
+    activities: Activity[];
+    lastUpdatedBy: string;
 }
 
 const projectSchema = new Schema({
@@ -47,9 +51,16 @@ const projectSchema = new Schema({
     },
     createdBy: {
         type: String,
-        default: "",
         required: true,
     },
+    activities: {
+        type: [Object],
+        default: [],
+    },
+    lastUpdatedBy: {
+        type: String,
+        required: true,
+    }
 }, {
     collection: 'projects',
     timestamps: true,
