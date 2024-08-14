@@ -26,6 +26,7 @@ import { findProject } from "./services/project.service.js";
 import { updateUser } from "./services/user.service.js";
 import { regenerateSession } from "./middlewares/regenerateSession.js";
 import passport from "passport";
+
 config();
 
 declare global {
@@ -78,6 +79,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(regenerateSession);
+
 const {
     AUTH_ROUTE,
     USERS_ROUTE,
@@ -101,29 +103,11 @@ app.use(ACTIVITIES_ROUTE, requireUser, ActivityRouter);
 const listenToEvents = (ioServer: Server) => {
     const onConnection = async (socket: Socket) => {
         const sid = socket.id;
-
-        // const queryId = socket.handshake.query.id;
-        // socket.join(queryId as string);
-        
-        // console.log(`Query id: `, queryId);
         console.log(`🔌 ${sid} is now connected`);
-
-        // const clientIp = socket.handshake.address;
-
-        // if (!clientConnections[clientIp]) {
-        //     clientConnections[clientIp] = 0;
-        // }
-
-        // clientConnections[clientIp] += 1;
-
-        // if (clientConnections[clientIp] > connectionLimit) {
-        //     socket.disconnect();
-        //     console.log('Connection limit exceeded for client', clientIp);
-        // }
 
         const onDisconnect = async () => {
             console.log(`❌ ${sid} has disconnected`);
-            // clientConnections[clientIp] -= 1;
+
             await updateUser({socketId: sid}, {isOnline: false});
         }
         
@@ -138,8 +122,6 @@ const listenToEvents = (ioServer: Server) => {
 
         const onNotification = async (data: INotification) => {
             const recipientSocketId = await getSocketId(data.recipient.userId);
-            console.log(data)
-            // const notification = createNotification(data);
             
             await addNotificationToUser(data.recipient.userId, data);
 
