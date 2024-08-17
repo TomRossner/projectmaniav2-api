@@ -91,31 +91,6 @@ const getUserByEmail = async (req: Request, res: Response) => {
     }
 }
 
-// const updateUser = async (req: Request, res: Response) => {
-//     try {
-//         const updatedUserData = req.body;
-//         const {userId} = req.params;
-
-//         await UserModel.updateOne({userId}, {
-//             $set: {
-//                 ...updatedUserData
-//             }
-//         });
-
-//         const user = await UserModel.findOne({userId});
-
-//         if (user) {
-//             const token = user.generateAuthToken();
-
-//             return res.status(200).send({token});
-//         }
-
-//     } catch (error) {
-//         console.error(error);
-//         res.status(400).send({error: 'Failed updating user'});
-//     }
-// }
-
 export const updateUserHandler = async (req: Request, res: Response) => {
     try {
         const {userId} = req.params;
@@ -177,23 +152,6 @@ export const deleteUserHandler = async (req: Request, res: Response) => {
         res.status(400).send({error: "Failed deleting user"});
     }
 }
-
-// const deleteUser = async (req: Request, res: Response) => {
-//     try {
-//         const {userId} = req.params;
-
-//         const user = await UserModel.findOneAndDelete({userId});
-
-//         if (!user) {
-//             return res.status(400).send({error: "Failed deleting user"})
-//         }
-        
-//         return res.status(200).send('Successfully deleted user');
-//     } catch (error) {
-//         console.error(error);
-//         res.status(400).send({error: 'Failed deleting user'});
-//     }
-// }
 
 const updateUserPassword = async (req: Request, res: Response) => {
     try {

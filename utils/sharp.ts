@@ -3,6 +3,8 @@ import sharp from "sharp";
 type PNG = "png";
 type JPEG = "jpeg";
 
+type Link = "link";
+
 type Format = PNG | JPEG;
 
 const isJPEG = (imgData: string): imgData is JPEG => {
@@ -11,6 +13,10 @@ const isJPEG = (imgData: string): imgData is JPEG => {
 
 const isPNG = (imgData: string): imgData is PNG => {
     return imgData.includes('data:image/png');
+}
+
+const isLink = (imgData: string): imgData is Link => {
+    return imgData.startsWith('http');
 }
 
 async function compressTo(format: Format, imgData: Buffer): Promise<Buffer> {
@@ -23,6 +29,10 @@ async function compressTo(format: Format, imgData: Buffer): Promise<Buffer> {
 
 // Process PNG/JPEG images
 async function processImg(imgDataURL: string): Promise<string> {
+    if (isLink(imgDataURL)) {
+        return imgDataURL;
+    }
+
     if (imgDataURL) {
 
         const imgData = imgDataURL.split(';base64,')[1];
