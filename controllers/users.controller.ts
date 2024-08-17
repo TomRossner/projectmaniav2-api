@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { comparePasswords, hash } from "../utils/bcrypt.js";
 import { UserDocument } from "../models/user.model.js";
 import UserModel from "../models/user.model.js";
-import { ExcludedFieldKeys, SelectedFields } from "../utils/types.js";
+import { AuthProvider, ExcludedFieldKeys, SelectedFields } from "../utils/types.js";
 import { DOCUMENT_EXCLUDED_FIELDS, USER_EXCLUDED_FIELDS } from "../utils/constants.js";
 import { IUser } from "../utils/interfaces.js";
 import { createUser, deleteUser, findUser, updateUser } from "../services/user.service.js";
@@ -13,14 +13,16 @@ import GoogleUserModel from "../models/google_user.model.js";
 
 export async function createUserHandler(req: Request<{}, {}, CreateUserData['body']>, res: Response) {
     try {
-        const isAlreadyRegistered = await findUser({email: req.body.email}) 
-            || await findGoogleUser({email: req.body.email});
+        const isAlreadyRegistered = await findUser({email: req.body.email});
         
         if (!!isAlreadyRegistered) {
             throw new Error("User already registered");
         }
 
-        const user = await createUser(req.body);
+        const user = await createUser({
+            ...req.body,
+            authProvider: req.body.authProvider as AuthProvider
+        });
 
         return res
             .status(201)
@@ -31,7 +33,7 @@ export async function createUserHandler(req: Request<{}, {}, CreateUserData['bod
             ]));
     } catch (error: any) {
         console.error(error);
-        return res.status(409).send(error.message)
+        return res.status(409).send(error.message);
     }
 }
 

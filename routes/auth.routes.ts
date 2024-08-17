@@ -22,11 +22,14 @@ AuthRouter.get('/logout', (req, res, next) => {
   });
 });
 
+// Github auth
 AuthRouter.get('/login/github', passport.authenticate('github'));
 AuthRouter.get('/oauth2/redirect/github', passport.authenticate('github', {
   successReturnToOrRedirect: `${CLIENT_URL}`,
   failureRedirect: `${CLIENT_URL}/sign-in`,
 }));
+
+// Google auth
 AuthRouter.get('/login/google', passport.authenticate('google'));
 AuthRouter.get('/oauth2/redirect/google', passport.authenticate('google', {
   successReturnToOrRedirect: `${CLIENT_URL}`,

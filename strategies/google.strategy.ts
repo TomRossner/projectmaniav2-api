@@ -1,14 +1,14 @@
 import passport from 'passport';
 import { Profile, Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import _ from "lodash";
-import { findUser, updateUser } from '../services/user.service.js';
-import { createGoogleUser, NewGoogleUserData, updateGoogleUser } from '../services/google_user.service.js';
+import { createUser, findUser, updateUser } from '../services/user.service.js';
 import { PORT } from '../utils/constants.js';
 import { config } from 'dotenv';
+import { NewUserData } from '../utils/interfaces.js';
 
 config();
 
-passport.use(new GoogleStrategy({
+export default passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID as string,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     callbackURL: `${process.env.API_URL as string}:${PORT}/api/auth/oauth2/redirect/google`,
@@ -20,30 +20,31 @@ passport.use(new GoogleStrategy({
     const email = profile.emails?.length ? profile.emails[0].value : '';
     
     if (!email) {
-      // Find user with another query
+      throw new Error("Google authentication failed");
     }
 
     const user = await findUser({email});
 
     if (!user) {
       try {
-        const newUser = await createGoogleUser({
+        const newUser = await createUser({
           firstName: profile._json.given_name as string,
           lastName: profile._json.family_name as string,
           email,
-        } as NewGoogleUserData);
+          authProvider: "google",
+        } as NewUserData);
 
         if (!newUser) {
           throw new Error('Failed creating Google user');
         }
   
-        const updatedNewUser = await updateGoogleUser({email}, {imgSrc, isOnline: true});
+        const updatedNewUser = await updateUser({email}, {imgSrc, isOnline: true});
         
         if (!updatedNewUser) {
-          return done('Google user update failed', null);
+          throw new Error('Google user update failed');
         }
   
-        req.user = updatedNewUser;
+        // req.user = updatedNewUser;
   
         return done(null, _.omit(updatedNewUser, [
           "_id",
@@ -51,7 +52,7 @@ passport.use(new GoogleStrategy({
         ]));
       } catch (error) {
         console.error(error);
-        return done('Login failed', null);
+        return done(error, null);
       }
     }
 
@@ -61,9 +62,9 @@ passport.use(new GoogleStrategy({
       return done('User update failed', null);
     }
 
-    req.user = updatedUser;
+    // req.user = updatedUser;
 
-    done(null, _.omit(updatedUser, [
+    return done(null, _.omit(updatedUser, [
       "_id",
       "__v",
       "password",

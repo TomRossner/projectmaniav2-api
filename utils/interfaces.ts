@@ -1,5 +1,5 @@
 import { ProjectDocument } from "../models/project.model.js";
-import { Sender, Recipient, Priority, Tag, NotificationType, NotificationData, SubTask, TeamMember, ActivityType } from "./types.js";
+import { Sender, Recipient, Priority, Tag, NotificationType, NotificationData, SubTask, TeamMember, ActivityType, AuthProvider } from "./types.js";
 
 interface IBaseUser {
     email: string;
@@ -9,6 +9,7 @@ interface IBaseUser {
 interface NewUserData extends IBaseUser {
     firstName: string;
     lastName: string;
+    authProvider: AuthProvider;
 }
 
 interface IUser extends NewUserData {

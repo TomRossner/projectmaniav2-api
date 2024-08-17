@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { validatePassword } from "../services/user.service.js";
+import { updateUser, validatePassword } from "../services/user.service.js";
 
 export default passport.use(new LocalStrategy({
     usernameField: 'email',
@@ -8,13 +8,19 @@ export default passport.use(new LocalStrategy({
     try {
         const user = await validatePassword({email, password});
 
-        console.log("Valid: ", user);
         if (!user) {
             throw new Error('Invalid email or password');
         }
 
-        done(null, user);
+        const updatedUser = await updateUser({email}, {isOnline: true});
+
+        if (!updatedUser) {
+            throw new Error('User update failed');
+        }
+
+        return done(null, user);
     } catch (error) {
-        done(error, undefined);
+        console.error(error);
+        return done(error, undefined);
     }
 }));

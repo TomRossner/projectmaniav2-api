@@ -20,6 +20,9 @@ export const createUserSchema = object({
         confirmedPassword: string({
             required_error: 'Confirmed password is required'
         }),
+        authProvider: string({
+            required_error: 'authProvider is required'
+        })
     }).refine((data) => data.password === data.confirmedPassword, {
         message: 'Passwords do not match',
         path: ['confirmedPassword']

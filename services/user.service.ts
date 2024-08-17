@@ -2,8 +2,9 @@ import _ from "lodash";
 import UserModel, { UserDocument } from "../models/user.model.js";
 import { FilterQuery } from "mongoose";
 import { UpdateFilter } from "mongodb";
+import { NewUserData } from "../utils/interfaces.js";
 
-export async function createUser(userData: Pick<UserDocument, "firstName" | "lastName" | "password" | "email">): Promise<UserDocument> {
+export async function createUser(userData: NewUserData): Promise<UserDocument> {
     try {
         return (await new UserModel(userData).save()).toObject();
     } catch (error: any) {

@@ -109,6 +109,8 @@ enum ActivityType {
     LeaveProject = 'project_leave',
 }
 
+type AuthProvider = "google" | "github" | "local";
+
 export {
     Priority,
     Tag,
@@ -127,4 +129,5 @@ export {
     NewStageData,
     UserCredentials,
     ActivityType,
+    AuthProvider,
 }

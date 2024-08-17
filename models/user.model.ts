@@ -4,13 +4,14 @@ import { v4 as uuid } from 'uuid';
 import { DEFAULT_BG, SALT_ROUNDS } from "../utils/constants.js";
 import { ProjectDocument } from "./project.model.js";
 import bcrypt from 'bcrypt';
+import { AuthProvider } from "../utils/types.js";
 
 // Define an interface for the UserModel document
 export interface UserDocument extends mongoose.Document {
     firstName: string;
     lastName: string;
     email: string;
-    password: string;
+    password?: string;
     socketId?: string;
     lastSeen?: Date;
     createdAt: Date;
@@ -20,6 +21,7 @@ export interface UserDocument extends mongoose.Document {
     imgSrc: string;
     mostRecentProject: Pick<ProjectDocument, "projectId" | "title"> | null;
     notifications: string[];
+    authProdiver: AuthProvider;
 
     generateAuthToken: () => string;
     comparePassword: (candidatePassword: string) => Promise<boolean>;
@@ -41,7 +43,7 @@ const userSchema = new Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: false,
     },
     socketId: {
         type: String,
@@ -68,6 +70,10 @@ const userSchema = new Schema({
     notifications: {
         type: [String],
         default: [],
+    },
+    authProvider: {
+        type: String,
+        required: true,
     }
 }, {
     collection: 'users',
@@ -84,7 +90,8 @@ userSchema.method('generateAuthToken', function() {
             imgSrc: this.imgSrc,
             createdAt: this.createdAt,
             mostRecentProject: this.mostRecentProject,
-            notifications: this.notifications
+            notifications: this.notifications,
+            authProvider: this.authProvider,
         }, process.env.JWT_SECRET as string);
     
         return token;
@@ -92,7 +99,7 @@ userSchema.method('generateAuthToken', function() {
 )
 
 userSchema.pre("save", async function(next) {
-    if (!this.isModified("password")) {
+    if (!this.authProvider || !this.password || !this.isModified("password")) {
         return next();
     }
 
