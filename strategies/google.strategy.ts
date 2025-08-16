@@ -2,9 +2,9 @@ import passport from 'passport';
 import { Profile, Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import _ from "lodash";
 import { createUser, findUser, updateUser } from '../services/user.service.js';
-import { PORT } from '../utils/constants.js';
-import { config } from 'dotenv';
+import { DEFAULT_BG, PORT } from '../utils/constants.js';
 import { NewUserData } from '../utils/interfaces.js';
+import { config } from "dotenv";
 
 config();
 
@@ -13,17 +13,25 @@ export default passport.use(new GoogleStrategy({
     clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     callbackURL: `${process.env.API_URL as string}:${PORT}/api/auth/oauth2/redirect/google`,
     scope: ['profile', 'email'],
-    passReqToCallback: true,
+    // passReqToCallback: true,
 },
-  async function(req, accessToken: string, refreshToken: string, profile: Profile, done: Function) {
+  async function(accessToken: string, refreshToken: string, profile: Profile, done: Function) {
     const imgSrc = profile._json.picture;
     const email = profile.emails?.length ? profile.emails[0].value : '';
-    
+    console.log("Access token ", accessToken);
+    console.log("Refresh token ", refreshToken);
+    // if (!refreshToken) {
+    //   return done("Google authentication failed - refresh token not present", null);
+    // }
+
     if (!email) {
       throw new Error("Google authentication failed");
     }
 
+    console.log("Authenticating with Google...")
     const user = await findUser({email});
+
+    console.log("User found: ", !!user);
 
     if (!user) {
       try {
@@ -38,17 +46,16 @@ export default passport.use(new GoogleStrategy({
           throw new Error('Failed creating Google user');
         }
   
-        const updatedNewUser = await updateUser({email}, {imgSrc, isOnline: true});
+        const updatedNewUser = await updateUser({email}, {imgSrc, authProvider: "google"});
         
         if (!updatedNewUser) {
           throw new Error('Google user update failed');
         }
   
-        // req.user = updatedNewUser;
-  
         return done(null, _.omit(updatedNewUser, [
           "_id",
           "__v",
+          "password"
         ]));
       } catch (error) {
         console.error(error);
@@ -56,13 +63,15 @@ export default passport.use(new GoogleStrategy({
       }
     }
 
-    const updatedUser = await updateUser({email}, {imgSrc, isOnline: true});
+    const updatedUser = await updateUser({email}, {
+      imgSrc: !!user.imgSrc && (user.imgSrc !== DEFAULT_BG) ? user.imgSrc : imgSrc,
+      isOnline: true,
+      authProvider: "google",
+    });
 
     if (!updatedUser) {
       return done('User update failed', null);
     }
-
-    // req.user = updatedUser;
 
     return done(null, _.omit(updatedUser, [
       "_id",
@@ -71,13 +80,3 @@ export default passport.use(new GoogleStrategy({
     ]));
   }
 ));
-
-// Serialize user into the sessions
-passport.serializeUser(async (user, done) => {
-  done(null, user);
-});
-
-// Deserialize user from the sessions
-passport.deserializeUser(async (user: Express.User, done) => {
-  done(null, user);
-});

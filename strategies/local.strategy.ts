@@ -9,13 +9,13 @@ export default passport.use(new LocalStrategy({
         const user = await validatePassword({email, password});
 
         if (!user) {
-            throw new Error('Invalid email or password');
+            throw 'Invalid email or password';
         }
 
-        const updatedUser = await updateUser({email}, {isOnline: true});
+        const updatedUser = await updateUser({email}, {isOnline: true, authProvider: "local"});
 
         if (!updatedUser) {
-            throw new Error('User update failed');
+            throw 'User update failed';
         }
 
         return done(null, user);

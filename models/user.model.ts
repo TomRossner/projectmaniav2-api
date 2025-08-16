@@ -5,6 +5,9 @@ import { DEFAULT_BG, SALT_ROUNDS } from "../utils/constants.js";
 import { ProjectDocument } from "./project.model.js";
 import bcrypt from 'bcrypt';
 import { AuthProvider } from "../utils/types.js";
+import { config } from "dotenv";
+
+config();
 
 // Define an interface for the UserModel document
 export interface UserDocument extends mongoose.Document {
@@ -21,7 +24,7 @@ export interface UserDocument extends mongoose.Document {
     imgSrc: string;
     mostRecentProject: Pick<ProjectDocument, "projectId" | "title"> | null;
     notifications: string[];
-    authProdiver: AuthProvider;
+    authProvider: AuthProvider;
 
     generateAuthToken: () => string;
     comparePassword: (candidatePassword: string) => Promise<boolean>;
@@ -113,7 +116,9 @@ userSchema.pre("save", async function(next) {
 });
 
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean>{
-    return await bcrypt.compare(candidatePassword, this.password).catch(err => false);
+    return await bcrypt
+        .compare(candidatePassword, this.password)
+        .catch(err => false);
 }
 
 const UserModel = model<UserDocument>('UserModel', userSchema);

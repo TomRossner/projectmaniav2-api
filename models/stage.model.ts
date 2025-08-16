@@ -1,10 +1,7 @@
-import { config } from "dotenv";
 import mongoose, { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
 import { ITask } from "../utils/interfaces.js";
 import { taskSchema } from "./task.model.js";
-
-config();
 
 // Define an interface for the StageModel document
 export interface StageDocument extends mongoose.Document {
@@ -53,7 +50,14 @@ const stageSchema = new Schema({
     }
 }, {
     collection: 'stages',
-    timestamps: true,
+    timestamps: false,
+});
+
+stageSchema.pre('save', function(next) {
+    if (this.isModified()) {
+      this.updatedAt = new Date();
+    }
+    next();
 });
 
 const StageModel = model<StageDocument>('StageModel', stageSchema);

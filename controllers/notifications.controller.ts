@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { NotificationModel } from "../models/notification.model.js";
 import { createNotification, deleteNotification, findNotifications, updateNotification } from "../services/notification.service.js";
 
 export const getNotificationsHandler = async (req: Request, res: Response) => {
@@ -17,7 +16,6 @@ export const getNotificationsHandler = async (req: Request, res: Response) => {
 
 export const createNotificationHandler = async (req: Request, res: Response) => {
     try {
-        console.log(req.body)
         const newNotificationData = req.body;
 
         const notification = await createNotification(newNotificationData);

@@ -1,4 +1,3 @@
-import { config } from "dotenv";
 import mongoose, { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
 import { IProject, IStage, ITask, IUser } from "../utils/interfaces.js";
@@ -7,8 +6,6 @@ import { ProjectDocument, ProjectModel } from "./project.model.js";
 import { ActivityType, TeamMember } from "../utils/types.js";
 import { StageModel } from "./stage.model.js";
 import UserModel from "./user.model.js";
-
-config();
 
 // Define an interface for the ActivityModel document
 export interface ActivityDocument extends mongoose.Document {

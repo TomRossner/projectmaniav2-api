@@ -22,15 +22,17 @@ import requireUser from "./middlewares/requireUser.js";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 import ActivityRouter from "./routes/activity.routes.js";
-import { findProject } from "./services/project.service.js";
-import { updateUser } from "./services/user.service.js";
-import { regenerateSession } from "./middlewares/regenerateSession.js";
 import passport from "passport";
+import ImagesRouter from "./routes/images.routes.js";
+import { listenToEvents } from "./utils/socket.utils.js";
 
 config();
 
 declare global {
     namespace Express {
+        interface User {
+            userId?: string; 
+        }
         interface Request {
             user?: User;
         }
@@ -66,7 +68,7 @@ app.use(session({
     cookie: {
         domain: 'localhost',
         httpOnly: true,
-        maxAge: parseInt(process.env.COOKIE_MAX_AGE as string),
+        maxAge: 1000 * 60 * 60 * 24,
         path: '/',
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production', 
@@ -78,7 +80,31 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(regenerateSession);
+
+app.use((req, res, next) => {
+    if (req.user) {
+        req.session.touch();
+    }
+    
+    next();
+});
+
+// Serialize user into the sessions
+passport.serializeUser(async (user, done) => {
+    console.log("Serializing...")
+    console.log("Serialized user: ", user)
+
+    if (!user) {
+        return done('Failed serializing user', null);
+    }
+
+    done(null, user);
+});
+
+// Deserialize user from the sessions
+passport.deserializeUser(async (user: Express.User, done) => {
+    done(null, user);
+});
 
 const {
     AUTH_ROUTE,
@@ -89,6 +115,7 @@ const {
     STAGES_ROUTE,
     TASKS_ROUTE,
     ACTIVITIES_ROUTE,
+    IMAGES_ROUTE,
 } = ROUTES;
 
 app.use(AUTH_ROUTE, AuthRouter);
@@ -99,212 +126,7 @@ app.use(PROJECTS_ROUTE, requireUser, ProjectsRouter);
 app.use(STAGES_ROUTE, requireUser, StagesRouter);
 app.use(TASKS_ROUTE, requireUser, TasksRouter);
 app.use(ACTIVITIES_ROUTE, requireUser, ActivityRouter);
-
-const listenToEvents = (ioServer: Server) => {
-    const onConnection = async (socket: Socket) => {
-        const sid = socket.id;
-        console.log(`🔌 ${sid} is now connected`);
-
-        const onDisconnect = async () => {
-            console.log(`❌ ${sid} has disconnected`);
-
-            await updateUser({socketId: sid}, {isOnline: false});
-        }
-        
-        const onOnline = async (userId: string) => {
-            await updateUser({userId}, {isOnline: true, socketId: sid});
-
-            console.log(`🔌 ${sid} is now connected`);
-            console.log("User id: ", userId);
-            
-            socket.broadcast.emit("online", {userId});
-        }
-
-        const onNotification = async (data: INotification) => {
-            const recipientSocketId = await getSocketId(data.recipient.userId);
-            
-            await addNotificationToUser(data.recipient.userId, data);
-
-            socket.to(recipientSocketId).emit("notification", data);
-        }
-
-        const onUpdateSocketId = async ({userId, socketId}: {userId: string, socketId: string}) => {
-            return await updateUser({userId}, {socketId});
-        }
-
-        const onNewTask = async (data: ITask) => {
-            const project = await findProject(data.projectId);
-
-            const userIds: string[] = project?.team
-                .filter(u => u.userId !== data.lastUpdatedBy)
-                .map(u => u.userId)
-            ?? [];
-
-            const socketIds: string[] = [];
-
-            for (const id of userIds) {
-                const socketId = await getSocketId(id);
-                
-                if (socketId) {
-                    socketIds.push(socketId);
-                }
-            }
-
-            console.log("ADD TASK - Socket ids: ", socketIds);
-            socket.to(socketIds).emit('newTask', data);
-        }
-
-        const onDeleteTask = async (data: ITask) => {
-            const project = await findProject(data.projectId);
-
-            const userIds: string[] = project?.team
-                .filter(u => u.userId !== data.lastUpdatedBy)
-                .map(u => u.userId)
-            ?? [];
-
-            const socketIds: string[] = [];
-
-            for (const id of userIds) {
-                const socketId = await getSocketId(id);
-                
-                if (socketId) {
-                    socketIds.push(socketId);
-                }
-            }
-
-            console.log("DELETE TASK - Socket ids: ", socketIds);
-            socket.to(socketIds).emit('deleteTask', data);
-        }
-
-        const onUpdateTask = async (data: ITask) => {
-            const project = await findProject(data.projectId);
-
-            const userIds: string[] = project?.team
-                .filter(u => u.userId !== data.lastUpdatedBy)
-                .map(u => u.userId)
-            ?? [];
-
-            const socketIds: string[] = [];
-
-            for (const id of userIds) {
-                const socketId = await getSocketId(id);
-                
-                if (socketId) {
-                    socketIds.push(socketId);
-                }
-            }
-
-            console.log("UPDATE TASK - Socket ids: ", socketIds);
-            socket.to(socketIds).emit('updateTask', data);
-        }
-
-        const onNewStage = async (data: IStage) => {
-            const project = await findProject(data.projectId);
-
-            const userIds: string[] = project?.team
-                .filter(u => u.userId !== data.lastUpdatedBy)
-                .map(u => u.userId)
-            ?? [];
-
-            const socketIds: string[] = [];
-
-            for (const id of userIds) {
-                const socketId = await getSocketId(id);
-                
-                if (socketId) {
-                    socketIds.push(socketId);
-                }
-            }
-
-            console.log("ADD STAGE - Socket ids: ", socketIds);
-            socket.to(socketIds).emit('newStage', data);
-        }
-
-        const onDeleteStage = async (data: IStage) => {
-            const project = await findProject(data.projectId);
-
-            const userIds: string[] = project?.team
-                .filter(u => u.userId !== data.lastUpdatedBy)
-                .map(u => u.userId)
-            ?? [];
-
-            const socketIds: string[] = [];
-
-            for (const id of userIds) {
-                const socketId = await getSocketId(id);
-                
-                if (socketId) {
-                    socketIds.push(socketId);
-                }
-            }
-
-            console.log("DELETE STAGE - Socket ids: ", socketIds);
-            socket.to(socketIds).emit('deleteStage', data);
-        }
-
-        const onUpdateStage = async (data: IStage) => {
-            const project = await findProject(data.projectId);
-
-            const userIds: string[] = project?.team
-                .filter(u => u.userId !== data.lastUpdatedBy)
-                .map(u => u.userId)
-            ?? [];
-
-            const socketIds: string[] = [];
-
-            for (const id of userIds) {
-                const socketId = await getSocketId(id);
-                
-                if (socketId) {
-                    socketIds.push(socketId);
-                }
-            }
-
-            console.log("UPDATE STAGE - Socket ids: ", socketIds);
-            socket.to(socketIds).emit('updateStage', data);
-        }
-        
-        const onUpdateProject = async (data: IProject) => {
-            const project = await findProject(data.projectId);
-
-            const userIds: string[] = project?.team
-                .filter(u => u.userId !== data.lastUpdatedBy)
-                .map(u => u.userId)
-            ?? [];
-
-            const socketIds: string[] = [];
-
-            for (const id of userIds) {
-                const socketId = await getSocketId(id);
-                
-                if (socketId) {
-                    socketIds.push(socketId);
-                }
-            }
-
-            console.log("UPDATE PROJECT - Socket ids: ", socketIds);
-            socket.to(socketIds).emit('updateProject', data);
-        }
-
-        socket
-            .on("disconnect", onDisconnect)
-            .on("online", (data) => onOnline(data.userId))
-            .on("notification", onNotification)
-            .on('updateSocketId', onUpdateSocketId)
-            // Tasks
-            .on('newTask', onNewTask)
-            .on('deleteTask',onDeleteTask)
-            .on('updateTask', onUpdateTask)
-            // Stages
-            .on('newStage', onNewStage)
-            .on('deleteStage', onDeleteStage)
-            .on('updateStage', onUpdateStage)
-            // Project
-            .on('updateProject', onUpdateProject)
-    }
-
-    ioServer.on("connection", onConnection);
-}
+app.use(IMAGES_ROUTE, requireUser, ImagesRouter);
 
 const init = async () => {
     await connectDB();

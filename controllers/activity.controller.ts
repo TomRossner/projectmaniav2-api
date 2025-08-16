@@ -1,13 +1,14 @@
 import { Request, Response } from "express";
-import { createActivity, deleteActivity, getActivities, updateActivity } from "../services/activity.service.js";
+import { createActivity, deleteActivity, getPaginatedActivities, updateActivity } from "../services/activity.service.js";
 
 export const getActivitiesHandler = async (req: Request, res: Response) => {
     try {
         const {projectId} = req.query;
+        const page = parseInt(req.query.page as string);
+        const limit = parseInt(req.query.limit as string);
 
-        const activities = await getActivities(projectId as string);
-
-        return res.status(200).send(activities);
+        const paginatedActivities = await getPaginatedActivities({projectId}, page, limit);
+        return res.status(200).send(paginatedActivities);
     } catch (error) {
         console.error(error);
         res.status(400).send({error: ' Failed fetching activity log'});

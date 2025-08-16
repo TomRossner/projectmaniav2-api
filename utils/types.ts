@@ -111,6 +111,24 @@ enum ActivityType {
 
 type AuthProvider = "google" | "github" | "local";
 
+type PaginationResponse = {
+    results: any[];
+    totalItems: number;
+    totalPages: number;
+    page: number;
+    limit: number;
+    hasPrevPage: boolean;
+    hasNextPage: boolean;
+    prevPage: number | null;
+    nextPage: number | null;
+}
+
+type ExternalLink = {
+    name: string;
+    url: string;
+    externalLinkId: string;
+}
+
 export {
     Priority,
     Tag,
@@ -130,4 +148,6 @@ export {
     UserCredentials,
     ActivityType,
     AuthProvider,
+    PaginationResponse,
+    ExternalLink,
 }

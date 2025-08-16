@@ -1,5 +1,6 @@
 import { config } from 'dotenv';
-import { ExcludedFields, ExcludedFieldKeys, Priority, NewStageData } from './types.js';
+import { ExcludedFields, Priority, NewStageData } from './types.js';
+
 config();
 
 const PORT: number = Number(process.env.PORT) || 3001;
@@ -19,6 +20,7 @@ const ROUTES = {
     STAGES_ROUTE: '/api/stages',
     TASKS_ROUTE: '/api/tasks',
     ACTIVITIES_ROUTE: '/api/activities',
+    IMAGES_ROUTE: '/api/images',
 }
 
 const MONGODB_URI: string = process.env.MONGODB_URI as string;
@@ -27,9 +29,10 @@ const SALT_ROUNDS: number = 10;
 
 const DEFAULT_BG: string = 'https://i.pngimg.me/thumb/f/720/36e5ddc52b194bd6ad71.jpg';
 
-const REQUEST_TIMEOUT: number = 10000; // in ms
+const REQUEST_TIMEOUT: number = 15000; // in ms
+// const REQUEST_TIMEOUT: number = 20000; // in ms
 
-const JSON_PAYLOAD_LIMIT: string = '5mb';
+const JSON_PAYLOAD_LIMIT: string = '10mb';
 
 const DOCUMENT_EXCLUDED_FIELDS: Pick<ExcludedFields, "__v" | "_id"> = {
     __v: 0,
@@ -53,6 +56,9 @@ const DEFAULT_STAGE: NewStageData = {
     title: 'New Stage'
 }
 
+const DEFAULT_LIMIT = 2;
+const DEFAULT_PAGE = 1;
+
 export {
     PORT,
     ROUTES,
@@ -69,4 +75,6 @@ export {
     DEFAULT_STAGE,
     API_URL,
     CLIENT_URL,
+    DEFAULT_LIMIT,
+    DEFAULT_PAGE,
 }

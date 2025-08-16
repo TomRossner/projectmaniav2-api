@@ -8,8 +8,9 @@ import { IUser } from "../utils/interfaces.js";
 import { createUser, deleteUser, findUser, updateUser } from "../services/user.service.js";
 import { CreateUserData } from "../schemas/user.schema.js";
 import omit from "lodash/omit.js";
-import { deleteGoogleUser, findGoogleUser, updateGoogleUser } from "../services/google_user.service.js";
-import GoogleUserModel from "../models/google_user.model.js";
+import { createFileName, getImageContentType, processImage, uploadImageToS3 } from "../aws/aws.utils.js";
+import { SessionRequest } from "../middlewares/requireUser.js";
+import { NotificationModel } from "../models/notification.model.js";
 
 export async function createUserHandler(req: Request<{}, {}, CreateUserData['body']>, res: Response) {
     try {
@@ -53,19 +54,12 @@ const getAllUsers = async (req: Request, res: Response) => {
 const getUserById = async (req: Request, res: Response) => {
     try {
         const {userId} = req.params;
-        console.log("User by id: ", req.params);
 
         const user: SelectedFields<UserDocument, ExcludedFieldKeys> | null = await UserModel
             .findOne({ userId })
             .select<SelectedFields<UserDocument, ExcludedFieldKeys>>(USER_EXCLUDED_FIELDS);
-
-        const googleUser: SelectedFields<UserDocument, ExcludedFieldKeys> | null = await GoogleUserModel
-            .findOne({ userId })
-            .select<SelectedFields<UserDocument, ExcludedFieldKeys>>(USER_EXCLUDED_FIELDS);
-
-        if (!user && !googleUser) throw new Error('User not found');
         
-        res.status(200).send(user || googleUser);
+        res.status(200).send(user);
     } catch (error) {
         console.error(error);
         res.status(400).send({error: 'Failed fetching user using id'});
@@ -79,47 +73,59 @@ const getUserByEmail = async (req: Request, res: Response) => {
         const user: SelectedFields<UserDocument, ExcludedFieldKeys> | null = await UserModel
             .findOne({ email })
             .select<SelectedFields<UserDocument, ExcludedFieldKeys>>(USER_EXCLUDED_FIELDS);
-
-        const googleUser: SelectedFields<UserDocument, ExcludedFieldKeys> | null = await GoogleUserModel
-        .findOne({ email })
-        .select<SelectedFields<UserDocument, ExcludedFieldKeys>>(USER_EXCLUDED_FIELDS);
-
-        if (!user && !googleUser) throw new Error('User not found');
         
-        res.status(200).send(user || googleUser);
+        res.status(200).send(user);
     } catch (error) {
         console.error(error);
         res.status(400).send({error: 'Failed fetching user using email'});
     }
 }
 
-export const updateUserHandler = async (req: Request, res: Response) => {
+export const updateUserHandler = async (req: SessionRequest, res: Response) => {
     try {
         const {userId} = req.params;
 
-        const isGoogleUser = await findGoogleUser({userId});
+        const found = await findUser({userId});
 
-        if (isGoogleUser) {
-            const googleUser = await updateGoogleUser({userId}, req.body);
-
-            if (!googleUser) {
-                throw new Error('Failed updating user');
-            }
-
-            req.user = googleUser as UserDocument;
-
-            return res.status(200).send(googleUser);
-        }
-
-        const user = await updateUser({userId}, req.body);
-
-        if (!user) {
+        if (!found) {
             throw new Error("Failed updating user");
         }
-        
-        req.user = user as UserDocument;
 
-        return res.status(200).send(user);
+        const isNewImgSrc = found.imgSrc !== req.body.imgSrc;
+        const imgSrc = req.body.imgSrc.length && isNewImgSrc ? await processImage(req.body.imgSrc, 'user') : "";
+
+        console.log("is new: ", isNewImgSrc);
+        const notifications = req.body.notifications;
+
+        const updatedNotifications = notifications.filter(async (notificationId: string) => await NotificationModel.countDocuments({notificationId}));
+        console.log('Updated User Notifications: ', updatedNotifications);
+
+        const updatedUser = await updateUser({userId}, {
+            ...req.body,
+            imgSrc: isNewImgSrc
+                ? imgSrc
+                : found.imgSrc,
+        });
+
+        if (!updatedUser) {
+            throw new Error("Failed updating user");
+        }
+
+        req.user = updatedUser as UserDocument;
+        req.session.passport!.user = req.user as UserDocument;
+
+        req.session.save((err) => {
+            if (err) {
+                console.error("Failed to save session: ", err);
+            } else {
+                console.log("Session successfully updated");
+            }
+        });
+
+        const session = req.session
+
+        console.log("Updated session: ", session);
+        return res.status(200).send(updatedUser);
     } catch (error) {
         console.error(error);
         res.status(400).send({error: "Failed updating user"});
@@ -129,18 +135,6 @@ export const updateUserHandler = async (req: Request, res: Response) => {
 export const deleteUserHandler = async (req: Request, res: Response) => {
     try {
         const {userId} = req.params;
-
-        const isGoogleUser = await findGoogleUser({userId});
-
-        if (isGoogleUser) {
-            const deletedGoogleUser = await deleteGoogleUser(userId);
-
-            if (!deletedGoogleUser) {
-                throw new Error("Failed deleting user");
-            }
-    
-            return res.sendStatus(200);
-        }
 
         const deleted = await deleteUser(userId);
 
@@ -203,26 +197,14 @@ const getUsersByQuery = async (req: Request, res: Response) => {
             .lean()
             .select(DOCUMENT_EXCLUDED_FIELDS);
         
-        const googleUsers: SelectedFields<IUser, ExcludedFieldKeys>[] = await GoogleUserModel
-        .find({$or: [
-            { firstName: {$regex: regex} },
-            { lastName: {$regex: regex} },
-        ]})
-        .lean()
-        .select(DOCUMENT_EXCLUDED_FIELDS);
-
-        if (!!users.length || !!googleUsers.length) {
-            return res.status(200).send(users.concat(googleUsers));
-        }
-        
-        return res.status(200).send([]);
+        return res.status(200).send(users);
     } catch (error) {
         console.error(error);
         res.status(400).send({error: 'Failed getting users'});
     }
 }
 
-const getCurrentUser = async (req: Request, res: Response) => {
+const getCurrentUser = (req: Request, res: Response) => {
     return res.send(req.user);
 }
 

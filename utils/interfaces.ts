@@ -47,6 +47,8 @@ interface ITask {
     subtasks: SubTask[];
     dependencies: string[];
     projectId: string;
+    createdAt: Date;
+    updatedAt: Date;
     lastUpdatedBy: string;
 }
 

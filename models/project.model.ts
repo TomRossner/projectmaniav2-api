@@ -1,11 +1,8 @@
-import { config } from "dotenv";
 import mongoose, { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
 import { Activity, IStage } from "../utils/interfaces.js";
 import { stageSchema } from "./stage.model.js";
 import { TeamMember } from "../utils/types.js";
-
-config();
 
 // Define an interface for the ProjectModel document
 interface ProjectDocument extends mongoose.Document {

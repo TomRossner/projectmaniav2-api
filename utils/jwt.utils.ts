@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import { config } from "dotenv";
 import _ from "lodash";
-import { ACCESS_TOKEN_TTL } from "./constants.js";
 
 config();
 

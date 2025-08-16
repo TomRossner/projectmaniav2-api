@@ -2,9 +2,9 @@ import passport from 'passport';
 import { Profile, Strategy as GithubStrategy } from 'passport-github2';
 import _ from "lodash";
 import { createUser, findUser, updateUser } from '../services/user.service.js';
-import { PORT } from '../utils/constants.js';
-import { config } from 'dotenv';
+import { DEFAULT_BG, PORT } from '../utils/constants.js';
 import { NewUserData } from '../utils/interfaces.js';
+import { config } from "dotenv";
 
 config();
 
@@ -40,7 +40,7 @@ export default passport.use(new GithubStrategy({
           throw new Error('Failed creating Github user');
         }
   
-        const updatedNewUser = await updateUser({email}, {imgSrc, isOnline: true});
+        const updatedNewUser = await updateUser({email}, {imgSrc, authProvider: "github"});
         
         if (!updatedNewUser) {
           throw new Error('Github user update failed');
@@ -56,7 +56,12 @@ export default passport.use(new GithubStrategy({
       }
     }
 
-    const updatedNewUser = await updateUser({email}, {imgSrc, isOnline: true});
+    const updatedNewUser = await updateUser({email}, {
+      imgSrc: !!user.imgSrc && (user.imgSrc !== DEFAULT_BG) ? user.imgSrc : imgSrc,
+      isOnline: true,
+      authProvider: "github",
+    });
+    console.log('updatedNewUser ',updatedNewUser)
         
     if (!updatedNewUser) {
       return done('Github user update failed', null);
@@ -68,13 +73,3 @@ export default passport.use(new GithubStrategy({
     ]));
   }
 ));
-
-// Serialize user into the sessions
-passport.serializeUser(async (user, done) => {
-  done(null, user);
-});
-
-// Deserialize user from the sessions
-passport.deserializeUser(async (user: Express.User, done) => {
-  done(null, user);
-});

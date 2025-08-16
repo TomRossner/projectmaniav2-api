@@ -23,7 +23,11 @@ export const createTaskSchema = object({
                 required_error: "stageId is required"
             })
         }),
-        externalLinks: array(string()).optional(),
+        externalLinks: array(object({
+            name: string(),
+            url: string(),
+            externalLinkId: string(),
+        })).optional(),
         tags: array(string()).optional(),
         assignees: array(string()).optional(),
         dependencies: array(string()).optional(),

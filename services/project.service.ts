@@ -2,6 +2,7 @@ import { FilterQuery, UpdateQuery } from "mongoose";
 import { ProjectModel, ProjectDocument } from "../models/project.model.js";
 import { createStage, deleteStage } from "./stage.service.js";
 import { DEFAULT_STAGE } from "../utils/constants.js";
+import _ from "lodash";
 
 export const findProject = async (projectId: string) => {
     return await ProjectModel.findOne({projectId}).lean();
@@ -28,7 +29,14 @@ export const createProject = async (newProjectData: Pick<ProjectDocument, "title
 }
 
 export const updateProject = async (query: FilterQuery<ProjectDocument>, update: UpdateQuery<ProjectDocument>) => {
-    return await ProjectModel.findOneAndUpdate(query, update, {new: true}).lean();
+    const updatedUpdate = {
+        ..._.omit(update, ["_id", "projectId", "createdAt", "createdBy"]),
+        updatedAt: new Date(),
+    }
+
+    console.log('updatedUpdate: ', updatedUpdate.stages)
+
+    return await ProjectModel.findOneAndUpdate(query, updatedUpdate, {new: true}).lean();
 }
 
 export const deleteProject = async (projectId: string) => {

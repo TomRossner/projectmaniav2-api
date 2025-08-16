@@ -19,7 +19,7 @@ export const updateStages = async (stages: IStage[]) => {
 
             if (tasks.length) await updateTasks(tasks);
 
-            return await updateStage({stageId}, stage);
+            await updateStage({stageId}, stage);
         }
     } catch (error: any) {
         console.error(error);
@@ -28,7 +28,12 @@ export const updateStages = async (stages: IStage[]) => {
 }
 
 export const updateStage = async (query: FilterQuery<StageDocument>, update: UpdateQuery<StageDocument>) => {
-    return await StageModel.findOneAndUpdate(query, _.omit(update, "_id"), {new: true}).lean();
+    const updatedUpdate = {
+        ..._.omit(update, ["_id", "stageId", "createdAt", "createdBy"]),
+        updatedAt: new Date(),
+    }
+
+    return await StageModel.findOneAndUpdate(query, updatedUpdate, {new: true}).lean();
 }
 
 export const findStage = async (stageId: string) => {

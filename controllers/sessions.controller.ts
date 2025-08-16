@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
-import { findUser, validatePassword } from "../services/user.service.js";
-import { UserCredentials } from "../utils/types.js";
+import { findUser } from "../services/user.service.js";
+import { UserDocument } from "../models/user.model.js";
+import { SessionRequest } from "../middlewares/requireUser.js";
 
 // export const createUserSessionHandler = async (req: Request, res: Response) => {
 //     const user = await validatePassword(req.body);
@@ -65,7 +66,7 @@ import { UserCredentials } from "../utils/types.js";
 //     });
 // }
 
-export const createUserSessionHandler = async (req: Request, res: Response) => {
+export const createUserSessionHandler = async (req: SessionRequest, res: Response) => {
     try {
         const {
             body: {
@@ -82,6 +83,7 @@ export const createUserSessionHandler = async (req: Request, res: Response) => {
         }
 
         req.user = user;
+        req.session.passport!.user = req.user as UserDocument;
 
         return res.status(201).send(user);
     } catch (error) {
@@ -90,7 +92,7 @@ export const createUserSessionHandler = async (req: Request, res: Response) => {
     }
 }
 
-export const getUserSessionHandler = async (req: Request, res: Response) => {
+export const getUserSessionHandler = (req: Request, res: Response) => {
     try {
         return res.send(req.user);
     } catch (error) {

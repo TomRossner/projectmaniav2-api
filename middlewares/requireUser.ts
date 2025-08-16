@@ -8,18 +8,17 @@ interface PassportSession extends Session{
     };
 }
 
-interface SessionRequest extends Request {
+export interface SessionRequest extends Request {
     session: PassportSession;
     user?: Express.User;
 }
 
 const requireUser: RequestHandler = (req: SessionRequest, res: Response, next: NextFunction) => {
-    
     if (!req.session.passport?.user) {
         return res.sendStatus(401);
     }
     
-    req.user = req.session.passport?.user;
+    req.user = req.session.passport.user;
 
     return next();
 } 

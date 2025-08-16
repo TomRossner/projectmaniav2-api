@@ -1,24 +1,21 @@
-import { config } from "dotenv";
 import mongoose, { Schema, model } from "mongoose";
 import { v4 as uuid } from 'uuid';
-import { Priority, SubTask } from "../utils/types.js";
+import { ExternalLink, Priority, SubTask } from "../utils/types.js";
 import { IStage } from "../utils/interfaces.js";
 import { DEFAULT_PRIORITY } from "../utils/constants.js";
-
-config();
 
 // Define an interface for the TaskModel document
 export interface TaskDocument extends mongoose.Document {
     title: string;
     description?: string;
     taskId: string;
-    thumbnailSrc?: string;
+    thumbnailSrc: string;
     isDone: boolean;
     createdAt: Date;
     updatedAt: Date;
     priority: Priority;
     dueDate: Date;
-    externalLinks: string[];
+    externalLinks: ExternalLink[];
     tags: string[];
     currentStage: Pick<IStage, "stageId" | "title">;
     assignees: string[];
@@ -44,6 +41,7 @@ const taskSchema = new Schema({
     },
     createdAt: {
         type: Date,
+        default: Date.now,
     },
     updatedAt: {
         type: Date,
@@ -53,7 +51,8 @@ const taskSchema = new Schema({
         default: DEFAULT_PRIORITY
     },
     thumbnailSrc: {
-        type: String
+        type: String,
+        default: ""
     },
     dueDate: {
         type: Date
@@ -99,8 +98,15 @@ const taskSchema = new Schema({
     }
 }, {
     collection: 'tasks',
-    timestamps: true,
+    timestamps: false,
 });
+
+// taskSchema.pre('save', function(next) {
+//     if (this.isModified()) {
+//       this.updatedAt = new Date(Date.now());
+//     }
+//     next();
+// });
 
 const TaskModel = model<TaskDocument>('TaskModel', taskSchema);
 
